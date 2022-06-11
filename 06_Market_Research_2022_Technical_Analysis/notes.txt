@@ -1,0 +1,28 @@
+Prior Technical Analysis
+> Purchased Stocks at anymoment
+> Market Dip
+> Support Line
+
+
+
+Invervals (M,W,D)
+> This helps me see the overall trend
+> If the strength has slowed or fastened
+
+Moving Averages 50, 200
+> This is a measurement of changes in the prices with respect to time
+
+MACD- 2MAs with difference in peirod via histogram
+It is a type of a momentum oscillator aka trend indicator
+> Imagine a water wave, the amplitude may grow and you can see the height changes by observation
+> Similarly, the height difference simply the image we look for in this case
+
+Usually 12-Period EMA and a 26-Period EMA
+> Entry Signal {as the MACD Line passes the signal line} aka intersection
+> Exit Signal { as the smooth line passes the volitile line} aka the intersection 
+
+
+Sources:
+https://www.investopedia.com/terms/m/macd.asp
+https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/macd
+
