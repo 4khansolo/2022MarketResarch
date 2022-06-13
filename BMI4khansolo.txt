@@ -1,0 +1,31 @@
+
+You can retrieve the codes from the link below:
+https://www.tradingview.com/script/fca6zuKz-BMI-4khansolo/
+
+if you prefer looking up from my username, it is under @fourkhansolo
+
+Cover
+> 50 MA
+> 200 MA > Support Line
+> Definition of Bearish Market that is 20% from recent high
+
+> The indicator will highlight every intersection from the mentioned above
+
+
+
+
+
+Bearish Market Indicator is a simple tool that highlights significants changes on the canvas (prices). For example, if the price dips lower than 50 Moving Averages (MA), it will highlight as a white color. If the close (closed price) is lower than the 200 MA, then the highlight color turns into orange. Finally, if the close value (closing price) dips lower than the 20% of the recent highs, it will highlight purple.
+
+
+
+
+
+References:
+Days Markets are closed: https://www.investopedia.com/ask/answers/06/stockexchangeclosed.asp
+Definiton of Bearish Market (Investopedia): https://www.investopedia.com/terms/b/bearmarket.asp
+Definition of Bearish Market (Fool): https://www.fool.com/investing/how-to-invest/bear-market/
+
+Compiled Code
+- Where is the code available?
+- How to get the indicator?
