@@ -1,0 +1,19 @@
+﻿0:00 Intro 
+0:06 BMI
+0:09 BMI Recap
+0:35 BMI Updates
+1:08 Market Update (Bearish Market)
+1:17 MMRI
+1:40 MMRI Parameters
+1:56 Future Indicator
+2:11 Future Indicator MACD
+2:35 Future Indicator Limitations
+2:42 Future Indicator RSI
+2:46 Future Indicator Analysis for Weakened Environment
+3:00 Future Indicator Entry Signals
+3:04 Future Indicator False Positive RSI
+3:16 Future Indicator Quick Changes in RSI but more volatile
+3:33 Unable to publish the indicator yet
+3:57 Recap
+4:38 Going Forward
+4:53 Outro 

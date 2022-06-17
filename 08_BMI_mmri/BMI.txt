@@ -1,0 +1,149 @@
+﻿https://www.tradingview.com/script/fca6zuKz-BMI-4khansolo/
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+//@version=5
+
+// "As he said, 'It aint much, but it's honest work'" Source: Accessed on June 16, 2022. https://en.meming.world/wiki/But_It's_Honest_Work
+// Please use it at your own discretion!
+
+
+indicator("BMI_4khansolo", overlay=true)
+
+
+//  ****************************************** Moving Averages ******************************************
+// Invoking the pre-defined functions from Trading View
+ma50=ta.sma(close, 50)
+ma200=ta.sma(close, 200)
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Plotting the functions. 50, 200 Moving Averages Respectively
+pma50=plot(ma50,color=color.new(color.green,15),title="ma50")
+pma200=plot(ma200,color=color.new(color.yellow,15),title="ma200")
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+
+// Indication for weak signals based on the Moving Averages (MAs)
+ma50Close=ta.crossover(ma50,close)
+ma200Close=ta.crossover(ma200,close)
+ma50And200Close=(ma50 >=close) and (ma200 >= close)
+
+
+// ****************************************** Parameters for Bearish Market ******************************************
+period = input(defval=253, title="Period")
+fiftyWeekHigh = ta.highest(high,period)
+fiftyWeekLow = ta.lowest(low,period)
+week52HighPlus = fiftyWeekHigh*(1.02)                 // This will be give a margin for displaying the RSI
+week52High = plot(week52HighPlus,display=display.none)// This hides the value from displaying
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/concepts/Inputs.html?highlight=input#integer-input
+
+
+// This is the value that will be used for checking with the closing
+// Basically, if the close (closing price) is less or equal to the value below, then we'll basically prompt it to put a purple flash
+bearishTesterValue=fiftyWeekHigh*(1-0.2)
+// Source: Retrieved as of June 11, 2022. https://www.investopedia.com/terms/b/bearmarket.asp
+// Source: Retrieved as of June 11, 2022. https://www.fool.com/investing/how-to-invest/bear-market/
+
+// Ploting the value 
+parameterOne=plot(bearishTesterValue, color=color.new(color.red,1),title="BMI_Value")
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+
+// ************************ Parameter for Bearish Market Definition ************************
+// This portion is highighlighting if the close touches the BMI value or the bearish tester value
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... ~52 Week High > Close     Weak          Purple
+
+bearishMarketDefinition = if bearishTesterValue >= close
+    true
+else
+    false
+colorBearishNess=if bearishMarketDefinition
+    color.new(color.purple,50)
+else
+    na
+// ****************************************** Filling Colors (coloring) Please refer to the appropiate functions/variables
+// ************************Highlighting the intersections close and MA (Alert Alert Alert)
+// bgcolor(color= ma50Close?color.new(color.white,75): ma200Close?color.new(color.orange,70):ma50And200Close?color.new(color.red,90): na)
+// Highlighting the Weak Signs 
+
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... 52D  MA                   Weak              White
+// ...................................... 200D MA                   Weak              Orange
+// ...................................... Both MA(s)                Weak              Red
+
+colours = if close <= ma50 and ma50Close
+    color.new(color.white,60)
+else if close <=ma200 and ma200Close
+    color.new(color.orange,60)
+else if ma50And200Close //and not bearishMarketDefinition
+    color.new(color.red,70)
+else
+    na
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+
+// This will basically change the color for highlighting for either 50 or 200 MA or BMI-value
+fill(pma50,pma200, color=colours)
+// source: Retrieved as of June 12, 2022. https://www.tradingview.com/pine-script-docs/en/v5/concepts/Fills.html?highlight=fill
+
+
+// highlight if the close (price) is lower or equal to the 20% lower from the recent highs
+//bgcolor(color=bearishMarketDefinition?color.new(color.purple,97):na)
+// Source: Retrieved as of June 11, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Top Bound for bearish {parm has not been activated}
+bound1= plot(bearishTesterValue*2,display=display.none)
+fiftyWeekLowPlot=plot(fiftyWeekLow,display=display.none)
+zeroMuch=plot(0, display=display.none)
+
+//  ****************************************** Simple: Moving Average Convergence Divergence  ******************************************
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+// ...................................... Indicator                 Strength              Color Highlight
+// ...................................... MACD > Signal             Strong                Green
+// ...................................... MACD > Signal             Weak                  Red
+
+// Filling the MACD signal under the bearish market indicator value (BMI-value)
+macdColor=if macdLine > signalLine
+    color.new(color.green, 60)
+else
+    color.new(color.red, 60)
+
+deduction=bearishTesterValue*.01 // 1 percent deduction as this will be proportionate
+parameterTwo = plot(bearishTesterValue-deduction, display=display.none) // this is a secondary parameter for the filling
+fill(parameterOne,parameterTwo, color=macdColor)
+
+
+// ...................................... Debugging plot(macdLine)
+//  ****************************************** Simple: RSI  ******************************************
+rsi=ta.rsi(close,14)
+rsiMA=ta.sma(rsi,14)
+// Source: Retrieved as of June 16, 2022. https://www.tradingview.com/pine-script-reference/v5/#fun_ta{dot}rsi
+// ...................................... Indicator          Color
+// ...................................... RSI > RSI-MA       Green
+// ...................................... RSI < RSI-MA       Yellow
+// ...................................... RSI < 30           Orange
+// ...................................... RSI > 70           Red
+
+
+rsiColor=if rsiMA < rsi and not (rsi > 70 or rsi < 30)
+    color.new(color.green,45)
+else if rsiMA > rsi and not (rsi > 70 or rsi < 30)
+    color.new(color.yellow,45)
+else if rsi < 30 or rsi < 70
+    color.new(color.orange,45)
+else
+    color.new(color.red,45)
+
+// Filling the RSI signal over the ~52 week high
+//hiPlot=(fiftyWeekHigh*1.01) // 1 percent addition as this will be proportionate * remove
+fiftyWeekHighPLus=(fiftyWeekHigh*1.01) 
+rsiPlot1=plot(fiftyWeekHighPLus,display=display.none)//color=rsiColor, linewidth=5)
+fill(week52High,rsiPlot1, color=rsiColor)
+
+
+// ...................................... Filling based on BMI {A little complicated}
+fiftyWeekHighPlot=fiftyWeekHighPLus*1.01
+bearishPlot1=plot(fiftyWeekHighPlot,display=display.none)
+
+fill(bearishPlot1,bound1, color=colorBearishNess) // more documentation will arise
+fill(fiftyWeekLowPlot,zeroMuch, color=colorBearishNess)

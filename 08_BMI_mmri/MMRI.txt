@@ -1,0 +1,40 @@
+﻿https://www.tradingview.com/script/t8glPCE4-MMRI-4khansolo/
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+// I do not come up with the original idea. The idea is from the legendary Mannarino.
+// The source is also listed below.
+// ****************************************** Mannarino Market Risk Indicator ******************************************
+library("MMRI_4khansolo")
+// Mannarino Market Risk Indicator
+// Source as of June 14, 2022: https://traderschoice.net/about-traders-choice/
+// Formula As follows: (DXY = 105.2) * (TNX = 3.366) / 1.61
+//                      Parameters
+//                   Low 	     50-100         Green
+//                   Moderate   100-200         Yellow
+//                   High 	    200-300         Orange
+//                   Extreme 	    300+        Red
+// The function for MMRI
+dxy = request.security("DXY", "D", close) // 1 Day
+tnx = request.security("TNX", "D", close) // 1 Day
+
+// Mannarino Market Risk Indicator (MMRI)with corresponding color
+export mmri(float DXY, float TNX)=>
+    // This poriton is basically a formula
+    mmri = math.round(DXY*TNX/1.61,2)
+    // This portion uses the parameters and change colors
+    colours = if mmri < 100
+        color.new(color.green,10)
+    else if mmri >= 100 and mmri < 200
+        color.new(color.yellow,10)
+    else if mmri >=200 and mmri<300
+        color.new(color.orange,10) 
+    else
+        color.new(color.red,10)
+    [mmri,colours]
+[mmri,colours]=mmri(dxy,tnx)
+//Source for rounding: As of June 14, 2022. https://www.tradingview.com/pine-script-docs/en/v5/language/Execution_model.html?highlight=round
+
+// Plotting the MMRI; the colors are represented with the mmri values
+plot(mmri,color=colours)
