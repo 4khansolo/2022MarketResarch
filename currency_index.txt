@@ -1,0 +1,112 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+indicator("Currency Index")
+
+import fourkhansolo/L_Index_4khansolo/7 as index
+import fourkhansolo/L_Annual/2 as annual
+import fourkhansolo/L_Beta/6 as beta
+
+//fiatIndexer
+ca   = "CXY"      // Canada; Bank of Canada (BOC)
+us   = "DXY"      // US; US FED (Fed)
+uk    = "BXY"      // Great Britain; Bank of England (BOE)
+jp   = "JXY"      // Japan; Bank of Japan (BOJ)
+eu    = "EXY"      // Europe; European Central Bank (ECB)
+
+currency_index_ca = request.security (ca,"D",close)//,currency=syminfo.currency)
+currency_index_us = request.security (us,"D",close)//,currency=syminfo.currency)
+currency_index_uk = request.security (uk,"D",close)//,currency=syminfo.currency)
+currency_index_jp = request.security (jp,"D",close)//,currency=syminfo.currency)
+currency_index_eu = request.security (eu,"D",close)//,currency=syminfo.currency)
+
+
+plot(currency_index_ca, ca, color=color.red)
+plot(currency_index_us, us)
+plot(currency_index_uk, uk, color=color.white)
+plot(currency_index_jp, jp, color=color.yellow)
+plot(currency_index_eu, eu, color=color.teal)
+
+jp_ca_crossover = ta.crossover(currency_index_jp,currency_index_ca) or ta.crossover(currency_index_ca,currency_index_jp)
+eu_us_crossover = ta.crossover(currency_index_eu,currency_index_us) or ta.crossover(currency_index_us,currency_index_eu) 
+us_jp_crossover = ta.crossover(currency_index_us,currency_index_jp) or ta.crossover(currency_index_jp,currency_index_us)
+bgcolor(jp_ca_crossover ? color.new(color.yellow,50): eu_us_crossover ? color.new(color.teal,50): 
+us_jp_crossover?color.new(color.blue,50): na)
+
+[security_returns, security_returns_percentage] = annual.delta_price(close)
+[currency_index_ca_returns, currency_index_ca_returns_percentage] = annual.delta_price(currency_index_ca)
+[currency_index_us_returns, currency_index_us_returns_percentage] = annual.delta_price(currency_index_us)
+[currency_index_uk_returns, currency_index_uk_returns_percentage] = annual.delta_price(currency_index_uk)
+[currency_index_jp_returns, currency_index_jp_returns_percentage] = annual.delta_price(currency_index_jp)
+[currency_index_eu_returns, currency_index_eu_returns_percentage] = annual.delta_price(currency_index_eu)
+
+
+
+
+correlation_currency_index_ca  = ta.correlation(currency_index_ca_returns_percentage,security_returns_percentage,251)
+correlation_currency_index_us  = ta.correlation(currency_index_us_returns_percentage,security_returns_percentage,251)
+correlation_currency_index_uk  = ta.correlation(currency_index_uk_returns_percentage,security_returns_percentage,251)
+correlation_currency_index_jp  = ta.correlation(currency_index_jp_returns_percentage,security_returns_percentage,251)
+correlation_currency_index_eu  = ta.correlation(currency_index_eu_returns_percentage,security_returns_percentage,251)
+
+beta_currency_index_ca = beta.beta(security_returns_percentage,correlation_currency_index_ca,251)
+beta_currency_index_us = beta.beta(security_returns_percentage,correlation_currency_index_us,251)
+beta_currency_index_uk = beta.beta(security_returns_percentage,correlation_currency_index_uk,251)
+beta_currency_index_jp = beta.beta(security_returns_percentage,correlation_currency_index_jp,251)
+beta_currency_index_eu = beta.beta(security_returns_percentage,correlation_currency_index_eu,251)
+
+
+
+
+
+
+
+
+
+beta_currency_index_ca_string = str.tostring(beta_currency_index_ca)
+beta_currency_index_us_string = str.tostring(beta_currency_index_us)
+beta_currency_index_uk_string = str.tostring(beta_currency_index_uk)
+beta_currency_index_jp_string = str.tostring(beta_currency_index_jp)
+beta_currency_index_eu_string = str.tostring(beta_currency_index_eu)
+
+
+
+correlation_currency_index_ca_string = str.tostring (correlation_currency_index_ca)
+correlation_currency_index_us_string = str.tostring (correlation_currency_index_us)
+correlation_currency_index_uk_string = str.tostring (correlation_currency_index_uk)
+correlation_currency_index_jp_string = str.tostring (correlation_currency_index_jp)
+correlation_currency_index_eu_string = str.tostring (correlation_currency_index_eu)
+
+
+// ****************************************  Table ****************************************
+color_white = color.white
+statistics_table = table.new(position = position.middle_right, rows = 6, columns = 3, bgcolor = color.new(color.yellow,70), 
+border_width=0)
+table.cell(statistics_table, row = 0, column = 0, text = "Statistics", text_color = color_white)
+table.cell(statistics_table, row = 0, column = 1, text = "Beta", text_color = color_white)
+table.cell(statistics_table, row = 0, column = 2, text = "Correlation", text_color = color_white)
+
+
+table.cell(statistics_table, row = 1, column = 0, text = "CA", text_color = color.red)
+table.cell(statistics_table, row = 1, column = 1, text = beta_currency_index_ca_string, text_color = color_white)
+table.cell(statistics_table, row = 1, column = 2, text = correlation_currency_index_ca_string, text_color = color_white)
+
+table.cell(statistics_table, row = 2, column = 0, text = "US", text_color = color.blue)
+table.cell(statistics_table, row = 2, column = 1, text = beta_currency_index_us_string, text_color = color_white)
+table.cell(statistics_table, row = 2, column = 2, text = correlation_currency_index_us_string, text_color = color_white)
+
+table.cell(statistics_table, row = 3, column = 0, text = "UK", text_color = color_white)
+table.cell(statistics_table, row = 3, column = 1, text = beta_currency_index_uk_string, text_color = color_white)
+table.cell(statistics_table, row = 3, column = 2, text = correlation_currency_index_uk_string, text_color = color_white)
+
+table.cell(statistics_table, row = 4, column = 0, text = "JP", text_color = color.yellow)
+table.cell(statistics_table, row = 4, column = 1, text = beta_currency_index_jp_string, text_color = color_white)
+table.cell(statistics_table, row = 4, column = 2, text = correlation_currency_index_jp_string, text_color = color_white)
+ 
+table.cell(statistics_table, row = 5, column = 0, text = "EU", text_color = color.teal)
+table.cell(statistics_table, row = 5, column = 1, text = beta_currency_index_eu_string, text_color = color_white)
+table.cell(statistics_table, row = 5, column = 2, text = correlation_currency_index_eu_string, text_color = color_white)
+
+
+

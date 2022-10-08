@@ -1,0 +1,311 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+library("L_CAPM")//, overlay =true
+
+
+// ********************************** Importing Modules ********************************************************************
+import fourkhansolo/L_Index_4khansolo/1 as index
+import fourkhansolo/L_Beta/4 as beta
+import fourkhansolo/L_Annual/2 as annual
+
+
+// ********************************** Functions Below ********************************************************************
+export return_checker (string test)=>
+    // Source:
+    // Comparing timeframes. Trading View. Accessed on Aug 29, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/concepts/Timeframes.html#timeframe-string-specifications
+    // This function prevents the codes in the comments below
+    // you can also highlight by the way
+    // oneYearInterval = timeframe.change("12M") // goes back 1year
+    // oneQuarterInterval = timeframe.change("3M") // goes back 3 Months
+    // oneMonthInterval = timeframe.change("1M") // goes back 1Month
+    // oneWeekInterval = timeframe.change("1W") // goes back 1Month
+    // oneDayInterval = timeframe.change("1D") // goes back 1Month
+    result = if test == "12M"
+        oneYearInterval = timeframe.change("12M")       // goes back 1year
+    else if test == "3M"
+        oneQuarterInterval = timeframe.change("3M")     // goes back 3 Months
+    else if test == "M"
+        oneMonthInterval = timeframe.change("1M")       // goes back 1Month
+    else if test == "W"
+        oneWeekInterval = timeframe.change("1W")        // goes back 1Month
+    else if test == "D"
+        oneDayInterval = timeframe.change("1D")         // goes back 1Month
+    output = result
+    //parameter = return_checker(intervals)
+    // intervals imply D,W,M,3M,12M
+    // This will highlight green! if the code is correct!
+    // bgcolor(parameter ? color.new(color.green, 80) : na)
+
+export appropiateReturns(bool frequency, series float current_stock_price, series float last_stock_price)=>
+    //Prerequisites:
+    //current_stock_price=request.security("fosl",intervals,close)//syminfo.tickerid
+    //last_stock_price=request.security("fosl",intervals,close[1])
+    // for function, return_checker (string intervals)
+    // Source: 
+    // While Loop. Trading View. Accessed on Aug 29, 2022. https://www.tradingview.com/pine-script-reference/v5/#op_while
+    // TimeFrame. Trading View. Accessed on Aug 29, 2022. 
+https://www.tradingview.com/pine-script-reference/v5/#var_timeframe{dot}isdwm
+    // This will first loop 
+    // The second loop will tally up for the returns until it reaches the parameter
+    checker = false
+    tallier = 0
+    returns = 0.0 
+    // Frequency walkthrough.
+    // the frequency is true evertime the interval is hit
+    while checker != frequency // Checks for T/F; checker == False
+        for i = 0 to 375
+            returns:= returns + (current_stock_price-last_stock_price)/last_stock_price
+            if timeframe.isdwm == frequency // Checks for T/F
+                checker:=true
+            tallier:=tallier + 1
+        [returns,tallier]
+    returns:=(returns/tallier)*100
+export returns_yields(bool frequency, series float current_stock_price, series float last_stock_price)=>
+    //Prerequisites:
+    //current_stock_price=request.security("fosl",intervals,close)//syminfo.tickerid
+    //last_stock_price=request.security("fosl",intervals,close[1])
+    // for function, return_checker (string intervals)
+    // Source: 
+    // While Loop. Trading View. Accessed on Aug 29, 2022. https://www.tradingview.com/pine-script-reference/v5/#op_while
+    // TimeFrame. Trading View. Accessed on Aug 29, 2022. 
+https://www.tradingview.com/pine-script-reference/v5/#var_timeframe{dot}isdwm
+    // This will first loop 
+    // The second loop will tally up for the returns until it reaches the parameter
+    checker = false
+    tallier = 0
+    returns = 0.0 
+    // Frequency walkthrough.
+    // the frequency is true evertime the interval is hit
+    while checker != frequency // Checks for T/F; checker == False
+        for i = 0 to 375
+            returns:= returns + (current_stock_price)/last_stock_price
+            if timeframe.isdwm == frequency // Checks for T/F
+                checker:=true
+            tallier:=tallier + 1
+        [returns,tallier]
+    returns:=(returns/tallier)*100
+
+export positron (series float number)=>
+    result = if number < 0
+        color.red
+    else
+        color.green
+// CAPM
+export capm(series float bond_yield, series float beta, series float index_return)=>
+    // (p. 407)
+    CAPM =bond_yield+(beta*index_return)-bond_yield
+
+export index_auto_select(simple string index_select, simple string index_auto)=>
+    result = if index_select == "Auto"
+        index_auto
+        //index.indexName()
+    else 
+        index_select
+export bond_name_converter(simple int multiplier)=>
+    result = if multiplier <= 5
+        "0"+str.tostring(multiplier)
+    else
+        str.tostring(multiplier)
+    result:=result+"Y"
+export annual_returns_no_dividends (series float returns, simple int length)=>
+    sum = 0.0
+    for i = 0 to length -1
+        sum := sum+ ((returns[i]+returns[i+1])/(returns[i+1])+1)
+    sum
+export delta_price(series float current_price)=>
+    delta=(current_price-current_price[1])/current_price[1]
+    delta_percent = delta*100
+    [delta,delta_percent]
+    
+export annual_return(series float delta,int length)=>
+    sequence= delta+1
+    for i=1 to length-1
+        sequence := sequence* (delta[i]+1)
+    yearly_return= sequence - 1
+    yearly_return_percent = yearly_return*100
+    [yearly_return,yearly_return_percent]
+
+export annual_returns (series float current_stock_price, series float current_index_price,int length)=>
+    // (Berk et al., p. 353) 
+    
+    [stock_delta,stock_delta_precent] = delta_price (current_stock_price)
+    [index_delta,index_delta_precent] = delta_price (current_index_price)
+    [stock_annual_return,stock_annual_return_percent] = annual_return(stock_delta,length)
+    [index_annual_return,index_annual_return_percent] = annual_return(index_delta,length)
+    [stock_annual_return,stock_annual_return_percent,index_annual_return,index_annual_return_percent]
+export le_length (simple string interval)=>
+    length = if interval == "D"
+        251
+    else if interval == "W"
+        52
+    else if interval == "M"
+        12
+    else if interval == "3M"
+        4
+    else if interval == "12M"
+        1
+    else 
+        252
+export boxed (series float stock_annual_return, series float index_annual_return, int multiplier)=>
+    stock_man = ta.sma(stock_annual_return,multiplier)
+    index_man = ta.sma(index_annual_return,multiplier)
+    [stock_man,index_man]
+
+
+
+
+
+// ********************************** Calculating ********************************************************************
+index_select = input.session("Auto", "Index Chooser", options=["Auto","TSX", "SPX", 
+"IXIC","W4500","TXOE","WTI1!","Gold","Silver"])
+multiplier = input.int(1, "Multiplier: 1,2,3,5,10,20,30", options=[1,2,3,5,10,20,30])
+interval = input.session("Auto", "Day | Week | Month | Quarter | Year", options=["Auto","D", "W", "M","3M","12M"])
+intervals = beta.timeframe_auto_select(interval)
+index_name=beta.index_auto_select(index_select)
+stock_id = syminfo.tickerid
+stock_name = syminfo.ticker
+//closing_price=
+current_stock_price = request.security(stock_id,intervals,close)//syminfo.tickerid
+current_index_price = request.security(index_name,intervals,close,currency=syminfo.currency)//syminfo.tickerid
+
+
+
+
+
+length =le_length(intervals)
+[stock_delta,stock_delta_percent] = delta_price(current_stock_price)//index_delta
+[index_delta,index_delta_percent] = delta_price(current_index_price)//
+
+
+
+[stock_annual_return,stock_annual_return_percent,index_annual_return,index_annual_return_percent] = 
+annual_returns(current_stock_price,current_index_price,length)
+[stock_annualized_returns,index_annualized_returns] = boxed(stock_annual_return_percent,index_annual_return_percent,multiplier)
+
+
+// The bg double checks the parameters
+parameter = return_checker(intervals) // please see the highlights i.e., daily == everyday, weekly etc...
+bgcolor(parameter ? color.new(color.green, 80) : na)
+
+
+
+// ********************************** Beta ********************************************************************
+beta = 
+beta.beta(stock_delta,index_delta,length)//ta.stdev(stock_yearly_returns,length)*ta.correlation(stock_yearly_returns,index_yearly_returns,length)/ta.stdev(index_yearly_returns,length)
+
+
+// ********************************** CAPM ********************************************************************
+multiplier_stringer = bond_name_converter(multiplier)//str.tostring(multiplier)
+
+multiplier_bond_yield = request.security(index.countrySelect()+str.tostring((multiplier_stringer)), intervals, close)  //"10Y"                                         
+// 1 Day Default Settings
+
+red = color.red
+expected_return_rate = capm(multiplier_bond_yield, beta , index_annualized_returns)//stock_annualized_returns
+plot(expected_return_rate,"CAPM:expected returns", style=plot.style_histogram,color= index.colorPositron(expected_return_rate) )
+
+no_capm = capm(multiplier_bond_yield,1,stock_annualized_returns)
+plot(no_capm,"Non-CAPM", color= index.colorPositron(no_capm) )
+
+// ********************************** CAPM Table ********************************************************************
+white=color.white
+yellow=color.yellow
+// Starting the table
+tableNotification = table.new(position = position.bottom_right, rows = 6, columns = 4, bgcolor = color.new(yellow,80), 
+border_width=1)
+table.cell(tableNotification, row = 0, column = 0, text = "Legend", text_color = red)
+table.cell_set_tooltip(tableNotification, row = 0, column = 0, tooltip = "Legend")
+//Source: https://www.tradingview.com/pine-script-reference/v5/#fun_str{dot}tonumber
+// Length | Right side
+length_string=str.tostring(math.round(length,2))
+table.cell(tableNotification, row = 0, column = 2, text = "Length", text_color = color.green)                       //
+table.cell(tableNotification, row = 0, column = 3, text = length_string, text_color = color.white)              // Adding the 
+datum into the table
+
+
+
+// Stock | Left : Returns based on frequency 
+stock_delta_percent_color = index.colorPositron(stock_delta_percent)
+index_delta_percent_color = index.colorPositron(index_delta_percent)
+frequent_stock_returns_string = str.tostring(math.round(stock_delta_percent,2))
+returns_interval_string=stock_name+" Returns based on "+intervals + " (%)"
+table.cell(tableNotification, row = 1, column = 0, text = returns_interval_string, text_color = white)               
+table.cell(tableNotification, row = 1, column = 1, text = frequent_stock_returns_string, text_color = stock_delta_percent_color)                    
+// Adding the datum into the table
+// Index | Right : Returns based on frequency 
+frequent_index_returns_string = str.tostring(math.round(index_delta_percent,2))
+table.cell(tableNotification, row = 1, column = 2, text = index_name+" Returns based on "+intervals + " (%)", text_color = 
+white)                    //
+table.cell(tableNotification, row = 1, column = 3, text = frequent_index_returns_string, text_color = index_delta_percent_color)              
+// Adding the datum into the table
+
+
+
+// Stock | Annual Returns | Left Side
+stock_annual_percent_color = index.colorPositron(stock_annual_return_percent)
+index_annual_percent_color = index.colorPositron(index_annual_return_percent)
+stock_annual_returns_string = str.tostring(math.round(stock_annual_return_percent,2))
+table.cell(tableNotification, row = 2, column = 0, text = stock_name+" Annual Return (%)", text_color = color.white)                       
+//
+table.cell(tableNotification, row = 2, column = 1, text = stock_annual_returns_string, text_color = stock_annual_percent_color)              
+// Adding the datum into the table
+// Index | Annual Returns | Right Side
+index_annual_returns_string = str.tostring(math.round(index_annual_return_percent,2))
+table.cell(tableNotification, row = 2, column = 2, text = index_name+" Annual Return (%)", text_color = color.white)                       
+//
+table.cell(tableNotification, row = 2, column = 3, text = index_annual_returns_string, text_color = index_annual_percent_color)              
+// Adding the datum into the table
+
+
+
+// Stock | Annualized Returns | Left Side
+stock_annualized_returns_color = index.colorPositron(stock_annualized_returns)
+index_annualized_returns_color = index.colorPositron(index_annualized_returns)
+multiplier_string=stock_name+" Returns " +str.tostring(math.round(multiplier,2)) + " Years (%)"
+stock_annualized_returns_string=str.tostring(math.round(stock_annualized_returns,2))
+table.cell(tableNotification, row = 3, column = 0, text = multiplier_string, text_color = white)                    //
+table.cell(tableNotification, row = 3, column = 1, text = stock_annualized_returns_string, text_color = 
+stock_annualized_returns_color)              // Adding the datum into the table
+// Index | Annualized Returns | Right Side
+index_annualized_returns_string=str.tostring(math.round(index_annualized_returns,2))
+table.cell(tableNotification, row = 3, column = 2, text = index_name +" Returns " +str.tostring(math.round(multiplier,2)) + " 
+Years (%)", text_color = white)                    //
+table.cell(tableNotification, row = 3, column = 3, text = index_annualized_returns_string, text_color = 
+index_annualized_returns_color)              // Adding the datum into the table
+
+// Beta | Left Side
+beta_string =str.tostring(math.round(beta,2))
+table.cell(tableNotification, row = 4, column = 0, text = "Beta", text_color = white)               
+table.cell(tableNotification, row = 4, column = 1, text = beta_string, text_color = color.white)                    // Adding 
+the datum into the table
+
+// Debt | Right Side
+multiplier_bond_string=str.tostring(multiplier)
+bond_yield_yearly_string=str.tostring(math.round(multiplier_bond_yield,2))
+table.cell(tableNotification, row = 4, column = 2, text = index.countrySelect() +" "+multiplier_bond_string+" Yield "  + " Years 
+(%)", text_color = white)                    //
+table.cell(tableNotification, row = 4, column = 3, text = bond_yield_yearly_string, text_color = color.white)              // 
+Adding the datum into the table
+
+
+
+// CAPM | Left Side
+CAPM_color = index.colorPositron(expected_return_rate)
+CAPM_string=str.tostring(math.round(expected_return_rate,2))
+table.cell(tableNotification, row = 5, column = 0, text = "CAPM based on "+ index_name, text_color = color.white)               
+table.cell(tableNotification, row = 5, column = 1, text = CAPM_string, text_color = CAPM_color)              // Adding the datum 
+into the table
+
+// CAPM | Left Side
+non_CAPM_color = index.colorPositron(no_capm)
+non_CAPM_string=str.tostring(math.round(no_capm,2))
+table.cell(tableNotification, row = 5, column = 2, text = "Non-CAPM", text_color = color.white)               
+table.cell(tableNotification, row = 5, column = 3, text = non_CAPM_string, text_color = non_CAPM_color)              // Adding 
+the datum into the table
+
+
+
+

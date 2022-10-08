@@ -1,0 +1,265 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+// @version=5
+
+// "As he said, 'It aint much, but it's honest work'" Source: Accessed on June 16, 2022. 
+https://en.meming.world/wiki/But_It's_Honest_Work
+// RSI and MACD are oscilator Indicator and the MA is a lagging indicator.
+// This means the data does not suggest but shows where the price is.
+// Feel free to use it at your own discretion.
+
+
+indicator(title="BMI_4khansolo", overlay=true)
+// AKA "Bearish Market Indicator 4khansolo"
+
+// importing outside modules 
+///import fourkhansolo/L_MA/5 as ma
+import fourkhansolo/L_Index_4khansolo/2 as index
+import fourkhansolo/L_Beta/6 as beta 
+import fourkhansolo/MMRI_4khansolo/2 as mmri
+// ************************ Parameter for Bearish Market Definition 
+******************************************************************************************************************************************************
+
+
+//  ****************************************** Moving Averages 
+******************************************************************************************************************************
+// Invoking the pre-defined functions from Trading View
+ma20=ta.sma(close,20)
+ma50=ta.sma(close,50)
+ma100=ta.sma(close,100)
+ma200=ta.sma(close,200)
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Plotting the functions. 50, 200 Moving Averages Respectively
+pma50=plot(ma50,color=color.new(color.green,40),title="ma50")
+pma100=plot(ma100,color=color.new(color.yellow,60),title="ma100")
+pma200=plot(ma200,color=color.new(color.orange,60),title="ma200")
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Indication for weak signals based on the Moving Averages (MAs)
+// [ma50Close,ma200Close,ma50And200Close,ma50Less200]=ma.support(ma50,close,ma200) == future implementation
+ma50Close=ta.crossover(ma50,close)
+ma200Close=ta.crossover(ma200,close)
+ma50And200Close=(ma50 >=close) and (ma200 >= close)
+ma50Less200=ma200>ma50
+
+// ****************************************** Parameters for Bearish Market 
+******************************************************************************************************************************
+// Added Options for the Days of the Year ( Market Days Opened)
+period = input.int(251, title="BMI-Period", options=[250,251,252,253,254,255,256,257,258,259,260])
+fiftyWeekHigh = ta.highest(high,period)
+week52HighPlus = fiftyWeekHigh*(1.02)                   // This will be give a margin for displaying the RSI
+week52High = plot(week52HighPlus,display=display.none)//color=color.teal)      //,display=display.none, title="~52WHigh")// This 
+hides the value from displaying
+plot(fiftyWeekHigh,color=color.teal)      //,display=display.none, title="~52WHigh")// This hides the value from displaying
+
+fiftyWeekLow = ta.lowest(low,period)
+
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/concepts/Inputs.html?highlight=input#integer-input
+
+
+// This is the value that will be used for checking with the closing
+// Basically, if the close (closing price) is less or equal to the value below, then we'll basically prompt it to put a purple 
+flash
+bearishTesterValue=fiftyWeekHigh*(1-0.2)
+// Source: Retrieved as of June 11, 2022. https://www.investopedia.com/terms/b/bearmarket.asp
+// Source: Retrieved as of June 11, 2022. https://www.fool.com/investing/how-to-invest/bear-market/
+
+// Ploting the value 
+bearishValuePlot1=plot(bearishTesterValue*0.98, color=color.new(color.yellow,10),title="BMI_Value")
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+week52LowPlot1=plot(fiftyWeekLow*0.99,display=display.none)
+week52LowPlot2=plot(fiftyWeekLow*0.98,display=display.none)
+
+// This portion is highighlighting if the close touches the BMI value or the bearish tester value
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... ~52 Week High > Close     Weak          Purple
+bearishMarketDefinition= if bearishTesterValue >= close
+    color.new(color.purple,50)
+else
+    na
+colorBearish=bearishMarketDefinition
+// ****************************************** Filling Colors (coloring) Please refer to the appropiate functions/variables
+// ************************Highlighting the intersections close and MA (Alert Alert Alert)
+// bgcolor(color= ma50Close?color.new(color.white,75): 
+ma200Close?color.new(color.orange,70):ma50And200Close?color.new(color.red,90): na)
+// Highlighting the Weak Signs 
+
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... 52D  MA                   Weak              White
+// ...................................... 200D MA                   Weak              Orange
+// ...................................... Both MA(s)                Weak              Red
+
+maColor = if close <= ma50 and ma50Close
+    color.new(color.white,80)
+else if close <=ma200 and ma200Close
+    color.new(color.orange,70)
+else if ma50And200Close //and not bearishMarketDefinition
+    if ma50Less200
+        color.new(color.red,40)
+    else if ma50>ma200
+        color.new(color.red,60)// :P
+    else
+        na
+else
+    na
+//colours= ma.support(ma50,close,ma200)
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+
+// This will basically change the color for highlighting for either 50 or 200 MA or BMI-value
+//fill(pma50,pma200, color=maColor, title="MA Highlights")
+// source: Retrieved as of June 12, 2022. https://www.tradingview.com/pine-script-docs/en/v5/concepts/Fills.html?highlight=fill
+
+
+// highlight if the close (price) is lower or equal to the 20% lower from the recent highs
+// bgcolor(color=bearishMarketDefinition?color.new(color.purple,97):na)
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+
+
+
+// Top Bound for bearish {parm has not been activated}
+bound1= plot(bearishTesterValue*2,display=display.none,title="fillerRSI")
+fiftyWeekLowPlot=plot(fiftyWeekLow,title="~52WLow", color=color.new(color.teal,10))//,display=display.none
+zeroMuch=plot(0, display=display.none,title="Zero")
+
+//  ****************************************** Simple: Moving Average Convergence Divergence  
+************************************************************************************
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+// ...................................... Indicator                 Strength              Color Highlight
+// ...................................... MACD > Signal             Strong                Green
+// ...................................... MACD > Signal             Weak                  Red
+
+// Filling the MACD signal under the bearish market indicator value (BMI-value)
+macdColor=index.colorMACD(macdLine,signalLine)
+deduction=bearishTesterValue*.01 // 1 percent deduction as this will be proportionate
+parameterTwo = plot(bearishTesterValue-deduction, display=display.none, title="fillerMACD") // this is a secondary parameter for 
+the filling
+fill(bearishValuePlot1,parameterTwo, color=macdColor, title="MACD FILLED")
+
+
+// ...................................... Debugging plot(macdLine)
+//  ****************************************** Simple: RSI  
+******************************************************************************************************************************
+rsi=ta.rsi(close,14)
+rsiMA=ta.sma(rsi,14)
+// Source: Retrieved as of June 16, 2022. https://www.tradingview.com/pine-script-reference/v5/#fun_ta{dot}rsi
+// ...................................... Indicator                             Color           Strength
+// ...................................... RSI > RSI-MA..........................Green...........Strong
+// ...................................... RSI > (70 and RSI > RSI-MA)...........Dark Green......OverBought
+// ...................................... RSI < RSI-MA..........................Red.............Weak
+// ...................................... RSI < (30 and RSI-MA).................Dark Red........OverSold
+// The point of the oscilator indicator is simply NOT to lose.
+
+rsiColor=index.colorRSIfull(rsi,rsiMA)
+// Filling the RSI signal over the ~52 week high
+fiftyWeekHighPLus=(fiftyWeekHigh*1.01) 
+rsiPlot1=plot(fiftyWeekHighPLus,display=display.none,title="RSI_Filler2")//color=rsiColor, linewidth=5)
+fill(week52High,rsiPlot1, color=rsiColor, title="RSI_Filled")
+
+
+// ...................................... Filling based on BMI {A little complicated}
+fiftyWeekHighPlot=fiftyWeekHighPLus*1.01
+bearishPlot1=plot(fiftyWeekHighPlot,display=display.none,title="MACD_Filler2")
+
+fill(bearishPlot1,bound1, color=colorBearish, title="Bearish Upper Bound") // more documentation will arise
+fill(week52LowPlot2,zeroMuch, color=colorBearish, title="Bearish Lower Bound")
+
+fill(week52LowPlot1,week52LowPlot2, color=maColor, title="MA FILLED")
+
+
+
+// ...................................... MMRI ......................................
+dxy = request.security(mmri.currencyIndex(),timeframe.period, close)    // 1 Day Default Settings
+ten_year_yield = if syminfo.currency == currency.USD
+    "TNX"
+else 
+    index.countrySelect()+"10Y"
+tnx = request.security(ten_year_yield, timeframe.period, close) // 1 Day
+[mmri,mmri_color]=mmri.mmri(dxy,tnx)
+
+// ...................................... BETA ......................................
+// Stock Exclusive
+intervals = timeframe.period
+stock_name = syminfo.tickerid
+simple_stock_close = request.security(stock_name,"D",close)
+current_stock_price=request.security(stock_name,intervals,simple_stock_close)
+// Index Exclusive
+index_select = input.session("Auto", "Pick Your Index", options=["Auto","TSX", "SPX", "IXIC","W4500","Gold","Silver"])
+index_name = beta.index_auto_select(index_select)
+simple_index_close = request.security(index_name,intervals,close, currency=syminfo.currency)
+current_index_price = request.security(index_name,intervals,simple_index_close, currency=syminfo.currency)
+
+// Returns Calculation
+[stock_returns, index_returns, stock_returns_percentage, 
+index_returns_percentage]=beta.returns(current_stock_price,current_index_price)
+
+
+// Beta Calculation
+multiplier = input.int(5, title="Year Multiplier (For how Long?)", options=[1,2,3,4,5,10,15,20])
+beta_length = beta.beta_length(intervals,multiplier)
+beta = beta.beta(stock_returns_percentage,index_returns_percentage,beta_length)
+
+// Correlation Calculation
+correlation = ta.correlation(stock_returns_percentage,index_returns_percentage,beta_length)
+
+
+//  ****************************************** Table  
+************************************************************************************************************************************************************************
+// ...................................... Legend ......................................
+tableNotification = table.new(position = position.top_right, rows = 7, columns = 2, bgcolor = color.new(color.yellow,70), 
+border_width=0)
+table.cell(tableNotification, row = 0, column = 0, text = "Technical Indicator", text_color = color.yellow)
+table.cell(tableNotification, row = 0, column = 1, text =syminfo.currency, text_color = color.yellow)
+table.cell_set_tooltip(tableNotification, row = 0, column = 0, tooltip = "Oscilators")
+//Source: https://www.tradingview.com/pine-script-reference/v5/#fun_str{dot}tonumber
+
+
+// ...................................... MMMRI 
+.............................................................................................................................................................
+mmri_string =str.tostring(math.round(mmri,2))
+table.cell(tableNotification, row = 4, column = 0, text = "MMRI", text_color = color.white)               
+table.cell(tableNotification, row = 4, column = 1, text = mmri_string, text_color = color.white, bgcolor=mmri_color)                    
+// Adding the datum into the table
+
+// ...................................... RSI 
+.............................................................................................................................................................
+rsi_string =str.tostring(math.round(rsi,2))
+rsi_MA_string =str.tostring(math.round(rsiMA,2))
+table.cell(tableNotification, row = 5, column = 0, text = "RSI | RSI MA:", text_color = color.white)               
+table.cell(tableNotification, row = 5, column = 1, text = rsi_string+" | "+rsi_MA_string, text_color = color.white, 
+bgcolor=rsiColor)                    // Adding the datum into the table
+
+// ...................................... MACD 
+.............................................................................................................................................................
+MACD_line_string =str.tostring(math.round(macdLine,2))
+MACD_signal_line_string =str.tostring(math.round(signalLine,2))
+table.cell(tableNotification, row = 6, column = 0, text = "MACD:{Line | Signal}", text_color = color.white)               
+table.cell(tableNotification, row = 6, column = 1, text ="{" + MACD_line_string+" | "+MACD_signal_line_string+"}", text_color = 
+color.white,bgcolor=macdColor)
+
+//  ****************************************** Table  
+************************************************************************************************************************************************************************
+// ...................................... Legend ......................................
+tableNotification01 = table.new(position = position.bottom_right, rows = 7, columns = 2, bgcolor = color.new(color.yellow,70), 
+border_width=0)
+table.cell(tableNotification01, row = 0, column = 0, text = "Compared Against: ", text_color = color.yellow)
+table.cell(tableNotification01, row = 0, column = 1, text = index_name, text_color = color.yellow)
+
+beta_string =str.tostring(math.round(beta,2))
+table.cell(tableNotification01, row = 1, column = 0, text = "Beta", text_color = color.white)               
+table.cell(tableNotification01, row = 1, column = 1, text = beta_string, text_color = color.white)  
+
+correlation_string =str.tostring(math.round(correlation,2))
+table.cell(tableNotification01, row = 2, column = 0, text = "Correlation", text_color = color.white)               
+table.cell(tableNotification01, row = 2, column = 1, text = correlation_string, text_color = color.white)  
+
+
+

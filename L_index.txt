@@ -1,0 +1,406 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+//
+library("L_Index_4khansolo")
+// ****************************************** All Imports 
+************************************************************************************
+import fourkhansolo/MMRI_4khansolo/2 as mmri
+import fourkhansolo/L_Beta/4 as beta
+
+
+// ****************************************** Country Auto Select ****************************************** 
+export countrySelect()=>
+    // Source:
+    // What economic data is available in pine? Accessed On Jul 1, 2022. 
+https://www.tradingview.com/chart/s7pJ0Zi5/?solution=43000665359
+    // this will select the country automatically 
+    // Countries
+    au = "AU"       // Australia
+    ca = "CA"       // Canada
+    eu = "EU"       // European Union
+    us = "US"       // USA
+    ind = "IN"      // India
+    ja = "JP"       // Japan
+    ch = "CH"       // Switzerland
+    ru  = "RU"      // Russia
+    gb  = "GB"      // United Kingdom
+    tr  = "TR"      // Turkey
+    // Country Abbreviation. NIH. https://www.ncbi.nlm.nih.gov/books/NBK7249/
+    // doubleChecking with the ticker location
+    locationDynamic = if syminfo.currency == currency.USD
+        us
+    else if syminfo.currency == currency.CAD
+        ca 
+    else if syminfo.currency == currency.EUR
+        eu 
+    else if syminfo.currency == currency.JPY
+        ja
+    else if syminfo.currency == currency.AUD
+        au
+    else if syminfo.currency == currency.CHF
+        ch
+    else if syminfo.currency == currency.RUB
+        ru
+    else if syminfo.currency == currency.GBP
+        gb
+    else if syminfo.currency == currency.TRY
+        tr
+    else if syminfo.ticker == "NIFTY"
+        ind
+    else
+        us
+    country=locationDynamic
+
+
+// ****************************************** Indicator Color 
+************************************************************************************
+export positron(series float number)=>
+// This will basically change color based on positivity :)
+    if number >= 0
+        color.new(color.green,1)
+    else
+        color.new(color.red,1)
+
+
+// ****************************************** Index: Invoke New Index ******************************************
+//                                            Available Current_Currency
+//                                            US            USD
+//                                            CA            CAD
+//                                            JP            JPY
+
+export indexName()=>
+    // This one will need to import L_BearishMarketIndicator for countrySelect()
+    // Appropiate Index (i.e., ETF)
+    // Note this will only invoke the largest and NOT ALL of the index(es)
+    // Future Implementation: RUPEE (when support comes), Other Currencies as well
+    // Source: Accessed as of June 15, 2022. https://www.tradingview.com/pine-script-reference/v5/#var_syminfo{dot}currency
+    indexName = if syminfo.currency == currency.USD //systeminfo.prefix
+        "SPX"
+    else if syminfo.currency == currency.CAD //syminfo.prefix == "TSX" or syminfo.prefix == "TSXV" or syminfo.prefix == "NEO" or 
+syminfo.prefix == "CSE"
+        "TSX"
+    else if syminfo.currency == currency.JPY
+        "NI225"
+    else if syminfo.currency == currency.EUR
+        "EU500"
+    else
+        "SPX"
+    indexName
+    // indexRSI = ticker.new(syminfo.prefix, index, session.regular, adjustment.splits)
+
+//                                            DEBUGGING
+//                                            lot(indexProperValue)
+//                                            frequency="D"
+
+// ****************************************** Index: Relative Strength Index [RSI]******************************************
+//                                            RSI        Days
+//                                            Seven         7
+//                                            Fourteen     14
+//                                            Twenty One   21
+//                                            Fifty        50
+//                                            Hundred     100
+//                                            Two Hundred 200
+export indexRSI(float indexProperValue)=>
+    // This will use the index (from the above function)
+    sevenRSI=ta.rsi(indexProperValue,7)
+    fourteenRSI=ta.rsi(indexProperValue,14)
+    twentyOneRSI=ta.rsi(indexProperValue,21)
+    fiftyRSI=ta.rsi(indexProperValue,50)
+    hundredRSI=ta.rsi(indexProperValue,100)
+    twoHundredRSI=ta.rsi(indexProperValue,200)
+    [sevenRSI,fourteenRSI,twentyOneRSI,fiftyRSI,hundredRSI,twoHundredRSI]
+    // Source: accessed as of June 14, 2022. https://www.tradingview.com/pine-script-reference/v5/#fun_ta{dot}rsi
+
+// Plotting the Index RSI
+// fourteenRSI *****************************************
+export maRSI(float sevenRSI,float fourteenRSI,float twentyOneRSI,float fiftyRSI,float hundredRSI,float twoHundredRSI)=>
+    sevenRSIma=ta.sma(sevenRSI,7)
+    fourteenRSIma=ta.sma(fourteenRSI,14)
+    twentyOneRSIma=ta.sma(twentyOneRSI,21)
+    fiftyRSIma=ta.sma(fiftyRSI,50)
+    hundredRSIma=ta.sma(hundredRSI,100)
+    twoHundredRSIma=ta.sma(twoHundredRSI,200)
+    [sevenRSIma,fourteenRSIma,twentyOneRSIma,fiftyRSIma,hundredRSIma,twoHundredRSIma]
+
+// ****************************************** RSI Plotting ******************************************
+export colorRSIfull (float rsi, float rsiMA)=>
+    rsiColor=if rsi >= 70 
+    // Overbought Territory
+        if rsiMA < rsi // RSI < 70 and RSI < RSIma
+    //      Strong Signal
+            color.new(color.green,80)
+        else if rsiMA > rsi
+            color.new(color.red,45)
+        else
+            color.new(color.purple,45)
+    else if rsi < 30
+    // Oversold Territory        
+        if rsiMA < rsi
+            color.new(color.green,45)
+        else if rsiMA >= rsi
+    //      Weak Signal
+            color.new(color.red,80) // This will give out a darken red color
+        else    
+            color.new(color.orange,45)
+    else
+    // Inclusive RSI between 70 and 30
+        if rsiMA > rsi
+    //      Weak Signal
+            color.new(color.red,45)
+        else
+    //      Strong Signal    
+            color.new(color.green,45)
+
+export rsiColor(float rsiInput)=>
+    // this will change the color of the RSI in ranges
+    colours = if rsiInput <= 30
+        color.new(color.red,1)
+    else if rsiInput >31 and rsiInput <50
+        color.new(color.yellow,1)
+    else if rsiInput >=50 and rsiInput <70
+        color.new(color.orange,1)
+    else
+        color.new(color.red,1)
+// Changing colors based on the less or more for the moving averages
+export rsiFillColor (float rsi,float maRSI, float opacity)=>
+    rsiFillColor=if rsi > maRSI
+        color.new(color.green,opacity)
+    else
+        color.new(color.red,opacity)
+
+export rsiCompartments(float rsi, series color colour)=>
+    seventy = if rsi > 70
+        colour
+    else 
+        color.new(color.red,80)
+    fiftyPlus = if (rsi > 50) and (rsi < 70)
+        colour
+    fiftyLess = if rsi > 30 and rsi <50
+        colour
+    thirty = if rsi < 30
+        colour
+    else 
+        color.new(color.red,80)
+    [seventy,fiftyPlus,fiftyLess,thirty]
+
+
+
+// ************************************************************ Location based Currency Index 
+************************************************************
+
+export fiatIndexer()=>
+    // ************************************************************ Establishing some variables 
+************************************************************
+    // Canada, USA, UK, Japan, EU
+    can   = "CXY"      // Canada; Bank of Canada (BOC)
+    usa   = "DXY"      // US; US FED (Fed)
+    uk    = "BXY"      // Great Britain; Bank of England (BOE)
+    jap   = "JXY"      // Japan; Bank of Japan (BOJ)
+    eu    = "EXY"      // Europe; European Central Bank (ECB)
+    fiatIndex = if syminfo.currency == currency.USD //if syminfo.ticker == "NASDAQ" or syminfo.ticker == "NYSE" or 
+syminfo.ticker == "OTC" 
+        usa
+    else if syminfo.currency == currency.CAD//if syminfo.ticker == "TSX" or syminfo.ticker == "TSXV" or syminfo.ticker == "NEO" 
+or syminfo.ticker == "CSE"
+        can
+    else if syminfo.currency == currency.JPY//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        jap
+    else if syminfo.currency == currency.GBP//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        uk
+    else if syminfo.currency == currency.EUR//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        eu
+    else
+        usa
+// ****************************************** Index: Moving Average Convergence Divergence [MACD] 
+******************************************
+export colorMACD(float macdLine, float signalLine)=>
+    properSignal=if macdLine<=signalLine
+        color.new(color.red,20)
+    else
+        color.new(color.green,20)
+        
+export indexMACD(series float indexProperValue)=>
+    //you will need the two variables below outside of the funcition
+    //indexValue=indexName()
+    //indexProperValue=request.security(indexValue, "D", close)
+    [macdLineIndex, signalLineIndex, histLineIndex] = ta.macd(indexProperValue, 12, 26, 9)
+
+export colour(float col,float col2)=>
+    exportColor=if col > col2
+        color.new(color.green,30)
+    else
+        color.new(color.red,30)
+
+// The following function will take a correct period
+export returns_calculation_length (string returns_calculation_intervals,int returns_calculation_week,int 
+returns_calculation_day)=>
+    // Needed
+    //returns_calculation_week = input.int(252, title="How may weekdays?", 
+options=[250,251,252,253,254,255,256,257,258,259,260])
+    //returns_calculation_day = input.int(365, title="How many days?", options=[365,366])
+    // length = returns_calculation_length(intervals,returns_calculation_week,returns_calculation_day)
+    result = if returns_calculation_intervals == "D"
+        returns_calculation_day
+    else if returns_calculation_intervals == "W"
+        returns_calculation_week
+    else
+        12
+
+
+export select_index(simple string returns_calculation_index) =>
+    // This needs >>
+    // returns_calculation_index = input.session("Auto", "Pick Index", options=["Auto","NDX","IXIC", "SPX", "TSX","W4500"])
+    // also this >>
+    // price_index = request.security(name_of_the_index, intervals, close) // D as default
+
+    result = if returns_calculation_index =="Auto"
+        indexName()
+    else
+        returns_calculation_index  
+
+export select_security_or_index(simple string ticker_or_index, simple string returns_calculation_index)=>
+    name_of_the_index=if ticker_or_index == "Index!"
+        select_index(returns_calculation_index)
+        
+        //indexName() // Retrieving the name of the index
+    else
+        syminfo.tickerid
+
+
+export returns (series float current_price, series float previous_price, float length)=>
+    // returns implies mean values
+    delta =0.0
+    for i = 0 to length -1
+        // this loop basically calculates for changes tallied up /sumed up
+        delta:=delta+((current_price-previous_price)/previous_price)
+    mean = (delta/length)*100
+
+export multiplier(simple int returns_calculation_how_long,int length)=>//string intervals, 
+    result =returns_calculation_how_long*length
+
+export stochastic_color(series float fast, series float slow)=>
+    result = if fast >=80 or slow >=80
+        if fast > slow
+            color.new(color.green,95)
+        else
+            color.new(color.red,95)
+    else
+        if fast > slow
+            color.new(color.green,90)
+        else
+            color.new(color.red,90)
+export ma_color(series float ma50, series float ma200)=>
+    ma50Close=ta.crossover(ma50,close)
+    ma200Close=ta.crossover(ma200,close)
+    ma50And200Close=(ma50 >=close) and (ma200 >= close)
+    ma50Less200=ma200>ma50
+    maColor = if close <= ma50 and ma50Close
+        color.new(color.white,80)
+    else if close <=ma200 and ma200Close
+        color.new(color.orange,70)
+    else if ma50And200Close //and not bearishMarketDefinition
+        if ma50Less200
+            color.new(color.red,40)
+        else if ma50>ma200
+            color.new(color.red,60)// :P
+        else
+            na
+    else
+        na            
+// ****************************************** Actual Work is below!  ****************************************** 
+intervals = input.session("D", "Day | Week | Month", options=["D", "W", "M"]) 
+//returns_calculation_intervals = input.session("D", "Returns Calculation: Day | Week | Month", options=["D", "W", "M"])
+
+ticker_or_index = input.session("Index!", "ticker or index? ", options=["Stock!","Index!"])
+// 
+//returns_calculation_intervals = input.session("D", "Returns Calculation: Day | Week | Month", options=["D", "W", "M"])
+returns_calculation_day = input.int(252, title="How may days?", options=[250,251,252,253,254,255,256,257,258,259,260,365,366])// 
+this implies days
+returns_calculation_week = 52//returns_calculation_day/7
+//returns_calculation_week = input.int(52, title="How many weeks?", options=[52,53])
+
+returns_calculation_how_long = input.int(1, title="For how long?", options=[1,2,3,4,5,6,7,8,9,10,15])
+
+returns_calculation_index = input.session("Auto", "Pick Index", options=["Auto","NDQ","NDX","DJI","IXIC", "SPX", "TSX","W4500"])
+length = 
+returns_calculation_length(intervals,returns_calculation_week,returns_calculation_day)//,returns_calculation_how_long)// 
+returns_calculation_how_long aka multiplier
+true_length=multiplier(returns_calculation_how_long,length)// if 2Y selected, 2x... = 2(something)
+//plot(true_length)
+
+name_of_the_index=select_security_or_index(ticker_or_index,returns_calculation_index)
+index_price_currently = request.security(name_of_the_index, intervals, close) // D as default
+index_price_previously = request.security(name_of_the_index, intervals, close[1]) // D as default
+
+
+// MMRI
+dxy = request.security("DXY", intervals, close) // 1 Day
+tnx = request.security("TNX", intervals, close) // 1 Day
+[mmri,mmri_color]=mmri.mmri(dxy,tnx)
+
+// Stochastics
+periodK = 14//input.int(14, title="%K Length", minval=1)
+smoothK = 1//input.int(1, title="%K Smoothing", minval=1)
+periodD = 3//input.int(3, title="%D Smoothing", minval=1)
+k = ta.sma(ta.stoch(close, high, low, periodK), smoothK)
+d = ta.sma(k, periodD)
+stochastic_color=stochastic_color(k,d)
+//plot(k)
+//plot(d,color=color.purple)
+
+
+
+
+
+
+
+
+
+
+// MACD
+[macdLineIndex, signalLineIndex, histLineIndex] = indexMACD(index_price_currently)// alt indexProperValue
+colorMACD=colorMACD(macdLineIndex,signalLineIndex)
+
+
+//RSI with RSIma
+[sevenRSI,fourteenRSI,twentyOneRSI,fiftyRSI,hundredRSI,twoHundredRSI]=indexRSI(index_price_currently)
+[sevenRSIma,fourteenRSIma,twentyOneRSIma,fiftyRSIma,hundredRSIma,twoHundredRSIma]=maRSI(sevenRSI,fourteenRSI,twentyOneRSI,fiftyRSI,hundredRSI,twoHundredRSI)
+colorRSI=colorRSIfull(fourteenRSI,fourteenRSIma)
+[seventyRSI,fiftyPlusRSI,fiftyLessRSI,thirtyRSI]=rsiCompartments(fourteenRSI,colorRSI)
+
+
+fourteen_rsi_plot=plot(fourteenRSI, color=color.green, title="14 Day RSI")
+fourteen_rsi_plot_ma=plot(fourteenRSIma, color=color.red,title="14 Day RSI MA")
+fill(fourteen_rsi_plot,fourteen_rsi_plot_ma,color=colorRSI)
+
+
+
+// ****************************************** Plotting Framework Color 
+************************************************************************************
+//zero to hundred
+zero_plot=hline(0, title="0",color=color.new(color.white,70))
+five_plot=hline(5, title="5",color=color.new(color.yellow,70))
+twenty_plot=hline(20, title="20",display=display.none)
+thirty_plot=hline(30, title="30",color=color.new(color.orange,40))
+fifty_plot=hline(50, title="50",color=color.new(color.white,70))
+seventy_plot=hline(70, title="70",color=color.new(color.orange,40))
+eighty_plot=hline(80, title="80",display=display.none)
+ninety_plot=hline(90, title="90",color=color.new(color.red,70))
+ninety_five_plot=hline(95, title="95",color=color.new(color.red,70))
+
+
+// Plotting the Indicators
+fill(ninety_plot,ninety_five_plot, color=mmri_color)            // MMRI
+fill(five_plot,zero_plot, color=colorMACD)                      // MACD
+fill(thirty_plot,seventy_plot,color=color.new(color.blue,99))   // Polishing the RSI
+fill(ninety_plot,five_plot, color=stochastic_color)             // stochastic_color
+
+

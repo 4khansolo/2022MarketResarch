@@ -1,0 +1,856 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// Main Sources: Accessed on July 17, 2022. https://www.tradingview.com/?solution=43000564727
+// © fourkhansolo
+
+//@version=5
+library("L_Financial_Data")
+// Variable deltas
+frequencies= input.timeframe('FY',"Periods", options=['FQ', 'FY'])
+// ******************************** Variables *********************************************************************************
+red=color.red
+blue=color.blue
+yellow=color.yellow
+green = color.green
+black = color.black
+period=frequencies                  //"FQ" // quarterly = "FQ", yearly = "FY"
+
+symbol=syminfo.tickerid
+daysInOneYear=360
+million=1000000
+// ******************************** Solvency Ratios 
+*********************************************************************************
+// Title
+export solventyRatios(series float debtToAsset,series float interestCoverage,series float freeCashFlow)=>
+    //debtToAsset = math.round(request.financial(symbol, "DEBT_TO_ASSET", period),2)                  // Requesting Data
+    //interestCoverage = math.round(request.financial(symbol, "INTERST_COVER", period),2)             // Requesting Data
+    //freeCashFlow = math.round(request.financial(symbol, "FREE_CASH_FLOW", period)/million,2)        // Requesting Data
+    //Source: https://www.tradingview.com/pine-script-reference/v5/#fun_str{dot}tonumber
+
+    tLog = table.new(position = position.bottom_left, rows = 4, columns = 2, bgcolor = yellow, border_width=1)
+    table.cell(tLog, row = 0, column = 0, text = "Solvency Ratios", text_color = blue)
+    table.cell(tLog, row = 0, column = 1, text = syminfo.ticker + " Current", text_color = color.blue)
+    table.cell_set_tooltip(tLog, row = 0, column = 0, tooltip = "Solvency Ratios")
+
+    // Debt to Asset
+    table.cell(tLog, row = 1, column = 0, text = "Debt To Asset (%)", text_color = black)               // Debt to Asset
+    debtToAssetTable=str.tostring(debtToAsset)                                                      // String Conversion
+    table.cell(tLog, row = 1, column = 1, text = debtToAssetTable, text_color = black)              // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog, row = 1, column = 1, tooltip = "Debt To Asset")                    // Hover and "TIPs"
+    //Source: https://www.tradingview.com/pine-script-reference/v5/#fun_str{dot}tonumber
+
+
+    // Interest Coverage
+    table.cell(tLog, row = 2, column = 0, text = "Interest Coverage", text_color = black)           // Interest Coverage
+    interestCoverageTable=str.tostring(interestCoverage)                                            // String Conversion
+    table.cell(tLog, row = 2, column = 1, text = interestCoverageTable, text_color = black)         // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog, row = 2, column = 1, tooltip = "Interest Coverage")                // TIPS
+
+    // Free Cash Flows
+    table.cell(tLog, row = 3, column = 0, text = "Free Cash-Flow (M)", text_color = black)          // Free Cash Flow
+    freeCashFlowTable=str.tostring(freeCashFlow)                                                    // String Conversion
+    table.cell(tLog, row = 3, column = 1, text = freeCashFlowTable, text_color = black)             // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog, row = 3, column = 1, tooltip = "Free Cash-Flow in Millions")       // TIPS
+
+
+// ******************************** Liquidity Ratios 
+*********************************************************************************
+// Title
+export liquidityRatios(series float currentRatio,series float quickRatio,series float changeAccontsReceivable,series float 
+currentAccountsReceivable,series float netSales,series float inventoryTurnover)=>
+    //currentRatio = math.round(request.financial(symbol, "CURRENT_RATIO", period),2)                 // Requesting Data
+    //quickRatio = math.round(request.financial(symbol, "QUICK_RATIO", period),2)                     // Requesting Data
+    //changeAccontsReceivable= request.financial(symbol, "CHANGE_IN_ACCOUNTS_RECEIVABLE", period)
+    //currentAccountsReceivable= request.financial(symbol, "ACCOUNTS_RECEIVABLES_NET", period) 
+    //netSales =request.financial(symbol, "TOTAL_REVENUE", period) // total revenue
+    //inventoryTurnover = math.round(request.financial(symbol, "INVENT_TURNOVER", period))            // Requesting Data                   
+    tLog2 = table.new(position = position.bottom_center, rows = 9, columns = 2, bgcolor = color.yellow, border_width=1)
+    table.cell(tLog2, row = 0, column = 0, text = "Liquidity Ratios", text_color = color.blue)
+    table.cell(tLog2, row = 0, column = 1, text = syminfo.ticker + " Current", text_color = color.blue)
+    table.cell_set_tooltip(tLog2, row = 0, column = 0, tooltip = "Liquidity Ratios")
+
+    // Current Ratio
+    table.cell(tLog2, row = 1, column = 0, text = "Current Ratio (%)", text_color = black)              // Current Ratio
+    currentRatioTable=str.tostring(currentRatio)                                                    // String Conversion
+    table.cell(tLog2, row = 1, column = 1, text = currentRatioTable, text_color = black)            // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog2, row = 1, column = 1, tooltip = "Current Ratio")                   // TIPS
+
+    // Acid Test/ Quick Ratio
+    table.cell(tLog2, row = 2, column = 0, text = "Quick Ratio (%)", text_color = black)                // Quick Ratio (LABEL)
+    quickRatioTable=str.tostring(quickRatio)                                                        // String Conversion
+    table.cell(tLog2, row = 2, column = 1, text = quickRatioTable, text_color = black)              // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog2, row = 2, column = 1, tooltip = "Quick Ratio")                     // TIPS
+
+    // Receivable Turnover
+    table.cell(tLog2, row = 3, column = 0, text = "Receivable Turnover", text_color = black)                                        
+// Quick Ratio (LABEL)
+    receivableTurnover = 
+math.round(netSales/(((currentAccountsReceivable-changeAccontsReceivable)+currentAccountsReceivable)/2),2) // Receivable 
+Turnover
+    receivableTurnoverTable=str.tostring(receivableTurnover)                                                                        
+// String Conversion
+    table.cell(tLog2, row = 3, column = 1, text = receivableTurnoverTable, text_color = black)                                      
+// Adding the datum into the table
+    table.cell_set_tooltip(tLog2, row = 3, column = 1, tooltip = "Receivable Turnover")                                             
+// TIPS
+
+    // Collection Period
+    table.cell(tLog2, row = 4, column = 0, text = "Collection Period (D)", text_color = black)      // Quick Ratio (LABEL)
+    collectionPeriod = math.round(daysInOneYear/receivableTurnover)                                 // Calculations plus 
+rounding                    
+    collectionPeriodTable=str.tostring(collectionPeriod)                                            // String Conversion
+    table.cell(tLog2, row = 4, column = 1, text = collectionPeriodTable, text_color = black)        // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog2, row = 4, column = 1, tooltip = "Collection Period in Days")       // TIPS
+
+
+    // Inventory Turnover
+    table.cell(tLog2, row = 5, column = 0, text = "Inventory Turnover (D)", text_color = black)      // Quick Ratio (LABEL)
+    inventoryTurnoverTable=str.tostring(inventoryTurnover)                                          // String Conversion
+    table.cell(tLog2, row = 5, column = 1, text = inventoryTurnoverTable, text_color = black)       // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog2, row = 5, column = 1, tooltip = "Inventory Turnover in Days")       // TIPS
+    
+// ******************************** Profitability Ratios 
+*********************************************************************************
+export profitabilityRatios(series float grossMargin,series float operatingMargin,series float profitMargin,series float 
+assetTurnover,series float returnOnAssets,series float payoutRatio,series float earningsPerShare,series float returnOnEquity)=>
+    //grossMargin=math.round(request.financial(symbol, "GROSS_MARGIN", period),2)                    // Requesting Data
+    //operatingMargin=math.round(request.financial(symbol, "OPERATING_MARGIN", period),2)                // Requesting Data
+    //profitMargin=math.round(request.financial(symbol, "NET_MARGIN", period),2)                      // Requesting Data
+    //assetTurnover=math.round(request.financial(symbol, "ASSET_TURNOVER", period),2)                  // Requesting Data
+    //returnOnAssets=math.round(request.financial(symbol, "RETURN_ON_ASSETS", period),2)                 // Requesting Data
+    //payoutRatio=math.round(request.financial(symbol, "DIVIDEND_PAYOUT_RATIO", period) ,2)                                              
+// Requesting Data
+    //earningsPerShare=math.round(request.financial(symbol, "EARNINGS_PER_SHARE_BASIC", period),2)        // Requesting Data
+    //returnOnEquity=math.round(request.financial(symbol, "RETURN_ON_EQUITY", period),2)                 // Requesting Data
+    tLog3 = table.new(position = position.bottom_right, rows = 10, columns = 2, bgcolor = color.yellow, border_width=1)
+    table.cell(tLog3, row = 0, column = 0, text = "Profitability Ratios (%)", text_color = color.blue)
+    table.cell(tLog3, row = 0, column = 1, text =  syminfo.ticker + " Current", text_color = color.blue)
+
+    table.cell_set_tooltip(tLog3, row = 0, column = 0, tooltip = "Profitability Ratios")
+
+    // Gross Margin
+    table.cell(tLog3, row = 1, column = 0, text = "Gross Margin (%)", text_color = black)              // Current Ratio
+    grossMarginTable=str.tostring(grossMargin)                                                     // String Conversion
+    table.cell(tLog3, row = 1, column = 1, text = grossMarginTable, text_color = black)            // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog3, row = 1, column = 1, tooltip = "Gross Margin")                   // TIPS
+
+    // Operating Margin
+    table.cell(tLog3, row = 2, column = 0, text = "Operating Margin (%)", text_color = black)              // Current Ratio
+    operatingMarginTable=str.tostring(operatingMargin)                                                 // String Conversion
+    table.cell(tLog3, row = 2, column = 1, text = operatingMarginTable, text_color = black)            // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 2, column = 1, tooltip = "Operating Margin")                   // TIPS
+
+    // Profit Margin
+    table.cell(tLog3, row = 3, column = 0, text = "Profit Margin (%)", text_color = black)              // Current Ratio
+    profitMarginTable=str.tostring(profitMargin)                                                    // String Conversion
+    table.cell(tLog3, row = 3, column = 1, text = profitMarginTable, text_color = black)            // Adding the datum into the 
+table
+    table.cell_set_tooltip(tLog3, row = 3, column = 1, tooltip = "Profit Margin")                   // TIPS
+    
+    // Asset Turnover
+    table.cell(tLog3, row = 4, column = 0, text = "Asset Turnover", text_color = black)              // Current Ratio
+    assetTurnoverTable=str.tostring(assetTurnover)                                                   // String Conversion
+    table.cell(tLog3, row = 4, column = 1, text = assetTurnoverTable, text_color = black)            // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 4, column = 1, tooltip = "Asset Turnover")                   // TIPS
+
+    // Return On Assets
+    table.cell(tLog3, row = 5, column = 0, text = "Return On Assets (%)", text_color = black)          // Current Ratio
+    returnOnAssetsTable=str.tostring(returnOnAssets)                                                   // String Conversion
+    table.cell(tLog3, row = 5, column = 1, text = returnOnAssetsTable, text_color = black)             // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 5, column = 1, tooltip = "Return On Assets (%)")               // TIPS
+
+    // Return On Equity
+    table.cell(tLog3, row = 6, column = 0, text = "Return On Equity (%)", text_color = black)          // Current Ratio
+    returnOnEquityTable=str.tostring(returnOnEquity)                                                   // String Conversion
+    table.cell(tLog3, row = 6, column = 1, text = returnOnEquityTable, text_color = black)             // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 6, column = 1, tooltip = "Return On Equity (%)")               // TIPS
+
+
+    // Earnings Per Share
+    table.cell(tLog3, row = 7, column = 0, text = " Earnings Per Share", text_color = black)            // Current Ratio
+    earningsPerShareTable=str.tostring(earningsPerShare)                                                // String Conversion
+    table.cell(tLog3, row = 7, column = 1, text = earningsPerShareTable, text_color = black)            // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 7, column = 1, tooltip = "Earnings Per Share")                  // TIPS
+
+    // Price Earnings
+    table.cell(tLog3, row = 8, column = 0, text = " Price Earnings", text_color = black)                // Current Ratio
+    priceEarnings=math.round((close / earningsPerShare),2)                                              // Requesting Data
+    priceEarningsTable=str.tostring(priceEarnings)                                                      // String Conversion
+    table.cell(tLog3, row = 8, column = 1, text = priceEarningsTable, text_color = black)               // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 8, column = 1, tooltip = "Earnings Per Share")                  // TIPS
+
+    // Payout Ratio
+    table.cell(tLog3, row = 9, column = 0, text = " Payout Ratio (%)", text_color = black)                // Current Ratio
+    payoutRatioTable=str.tostring(payoutRatio)                                                      // String Conversion
+    table.cell(tLog3, row = 9, column = 1, text = payoutRatioTable, text_color = black)               // Adding the datum into 
+the table
+    table.cell_set_tooltip(tLog3, row = 9, column = 1, tooltip = "Payout Ratio")                  // TIPS
+    xpa=1+1
+
+
+
+
+
+// Requesting Data
+debtToAsset = math.round(request.financial(symbol, "DEBT_TO_ASSET", period)*100,2)                      // Debt to Asset Ratio
+interestCoverage = math.round(request.financial(symbol, "INTERST_COVER", period),2)                 // Interest Coverage 
+freeCashFlow = math.round(request.financial(symbol, "FREE_CASH_FLOW", period)/million,2)            // Free Cash Flow
+currentRatio = math.round(request.financial(symbol, "CURRENT_RATIO", period),2)                     // Current Ratio
+quickRatio = math.round(request.financial(symbol, "QUICK_RATIO", period),2)                         // Quick Ratio
+changeAccontsReceivable= request.financial(symbol, "CHANGE_IN_ACCOUNTS_RECEIVABLE", period)         // Delta AR
+currentAccountsReceivable= request.financial(symbol, "ACCOUNTS_RECEIVABLES_NET", period)            // AR
+netSales =request.financial(symbol, "TOTAL_REVENUE", period)                                        // Total revenue aka Sales
+inventoryTurnover = math.round(request.financial(symbol, "INVENT_TURNOVER", period),2)              // Inventory Turnover
+grossMargin=math.round(request.financial(symbol, "GROSS_MARGIN", period),2)                         // Gross Margin (net sales/ 
+sales)
+operatingMargin=math.round(request.financial(symbol, "OPERATING_MARGIN", period),2)                 // Operating Margin
+profitMargin=math.round(request.financial(symbol, "NET_MARGIN", period),2)                          // Net Margin (net 
+income/sales or revenue)
+assetTurnover=math.round(request.financial(symbol, "ASSET_TURNOVER", period),2)                     // Asset turnover
+returnOnAssets=math.round(request.financial(symbol, "RETURN_ON_ASSETS", period),2)                  // Return on Assets
+payoutRatio=math.round(request.financial(symbol, "DIVIDEND_PAYOUT_RATIO", period) ,2)               // Dividend Payout Ratio
+earningsPerShare=math.round(request.financial(symbol, "EARNINGS_PER_SHARE_BASIC", period),2)        // Earnings Per Share
+returnOnEquity=math.round(request.financial(symbol, "RETURN_ON_EQUITY", period),2)                  // Return on Equity
+
+
+
+
+
+
+// Usage
+//profitabilityRatios(grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity)
+//liquidityRatios(currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover)
+//solventyRatios(debtToAsset,interestCoverage,freeCashFlow)
+
+
+
+
+
+
+// New 
+export fundamental_analysis_v01 (simple string period, series float closer,series float grossMargin,series float 
+operatingMargin,series float profitMargin,series float assetTurnover,series float returnOnAssets,series float payoutRatio,series 
+float earningsPerShare,series float returnOnEquity,series float currentRatio,series float quickRatio,series float 
+changeAccontsReceivable,series float currentAccountsReceivable,series float netSales,series float inventoryTurnover,series float 
+debtToAsset,series float interestCoverage,series float freeCashFlow)=>
+    // ************************************************** PROFITABILITY RATIOS
+    //grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity
+    grossMarginTable=str.tostring(grossMargin)                                                          // String Conversion
+    operatingMarginTable=str.tostring(operatingMargin)                                                  // String Conversion
+    profitMarginTable=str.tostring(profitMargin)                                                        // String Conversion
+    assetTurnoverTable=str.tostring(assetTurnover)                                                      // String Conversion
+    returnOnAssetsTable=str.tostring(returnOnAssets)                                                    // String Conversion
+    returnOnEquityTable=str.tostring(returnOnEquity)                                                    // String Conversion
+    earningsPerShareTable=str.tostring(earningsPerShare)                                                // String Conversion
+    priceEarnings=math.round((closer / earningsPerShare),2)                                              // Requesting Data
+    priceEarningsTable=str.tostring(priceEarnings)                                                      // 
+    payoutRatioTable=str.tostring(payoutRatio)                                                          // String Conversion
+    
+    
+    profitability_bg_color = color.new(color.blue,80)
+    liquidity_bg_color = color.new(color.blue,80)
+    solvency_bg_color = color.new(color.blue,80)
+    
+    // Row 0: Name of the Row    
+    fundamental_table = table.new(position = position.top_left, rows = 5, columns = 21, bgcolor = color.yellow, border_width=0)
+    table.cell(fundamental_table, row = 1, column = 0, text = "Period?", text_color = color.blue)
+    table.cell(fundamental_table, row = 2, column = 0, text = period, text_color = color.blue)
+    table.cell(fundamental_table, row = 3, column = 0, text = syminfo.ticker, text_color = color.blue)
+    
+    table.cell(fundamental_table, row = 0, column = 1, text = "P", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 2, text = "R", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 3, text = "O", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 4, text = "F", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 5, text = "I", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 6, text = "T", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 7, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 8, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 9, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 1, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 2, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 3, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 4, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 5, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 6, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 7, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 8, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 9, tooltip = "Profitability Ratios")
+    // ....................... Gross Margin [1]
+    table.cell(fundamental_table, row = 1, column = 1, text = "G-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 1, text = "(%)", text_color = black, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 1, text = grossMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 1, tooltip = "Gross Margin")                   // TIPS
+    // ....................... Operating Margin [2]
+    table.cell(fundamental_table, row = 1, column = 2, text = "O-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 2, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 2, text = operatingMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 2, tooltip = "Operating Margin")                   // TIPS
+    // ....................... Profit Margin [3]
+    table.cell(fundamental_table, row = 1, column = 3, text = "P-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 3, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 3, text = profitMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 3, tooltip = "Profit Margin")                   // TIPS
+    // ....................... Asset Turnover [4]
+    table.cell(fundamental_table, row = 1, column = 4, text = "A-Turnover", text_color = black, bgcolor = 
+profitability_bg_color)              // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 4, text = "(n.a.)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 4, text = assetTurnoverTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 4, tooltip = "Asset Turnover: Sales/Total Asset")                      
+// TIPS
+    // ....................... Return On Assets [5]
+    table.cell(fundamental_table, row = 1, column = 5, text = "ROA", text_color = black, bgcolor = profitability_bg_color)           
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 5, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 5, text = returnOnAssetsTable, text_color = black, bgcolor = 
+profitability_bg_color)              // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 5, tooltip = "Return On Assets (%)")                // TIPS
+    // ....................... Return On Equity [6]
+    table.cell(fundamental_table, row = 1, column = 6, text = "ROE", text_color = black, bgcolor = profitability_bg_color)          
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 6, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 6, text = returnOnEquityTable, text_color = black, bgcolor = 
+profitability_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 6, tooltip = "Return On Equity (%)")               // TIPS
+    // ....................... Earnings Per Share [7]
+    table.cell(fundamental_table, row = 1, column = 7, text = "EPS", text_color = black, bgcolor = profitability_bg_color)            
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 7, text = "", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 7, text = earningsPerShareTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 7, tooltip = "Earnings Per Share")                  // TIPS
+    // ....................... Price Earnings [8]
+    table.cell(fundamental_table, row = 1, column = 8, text = "PE", text_color = black, bgcolor = profitability_bg_color)                
+// Current Ratio                                                   // String Conversion
+    table.cell(fundamental_table, row = 2, column = 8, text = "", text_color = black, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 8, text = priceEarningsTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 8, tooltip = "Price to Earnings")                  // TIPS
+    // ....................... Payout Ratio [9]
+    table.cell(fundamental_table, row = 1, column = 9, text = "PayoutRatio", text_color = black, bgcolor = 
+profitability_bg_color)                // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 9, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 9, text = payoutRatioTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 9, tooltip = "Payout Ratio")                  // TIPS
+    
+    
+    
+    
+    // ************************************************** LIQUIDITY RATIOS
+    // currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover
+    currentRatioTable=str.tostring(currentRatio)                                                    // String Conversion
+    quickRatioTable=str.tostring(quickRatio)                                                        // String Conversion
+    receivableTurnover = 
+math.round(netSales/(((currentAccountsReceivable-changeAccontsReceivable)+currentAccountsReceivable)/2),2) // Receivable 
+Turnover
+    receivableTurnoverTable=str.tostring(receivableTurnover)                                                                        
+// String Conversion
+    collectionPeriod = math.round(daysInOneYear/receivableTurnover)                                 // Calculations plus 
+rounding                    
+    collectionPeriodTable=str.tostring(collectionPeriod)                                            // String Conversion 
+    inventoryTurnoverTable=str.tostring(inventoryTurnover)                                          // String Conversion
+    
+    table.cell(fundamental_table, row = 0, column = 10, text = "LI", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 11, text = "QU", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 12, text = "ID", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 13, text = "IT", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 14, text = "Y", text_color = color.blue)
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 10, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 11, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 12, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 13, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 14, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 15, tooltip = "Liquidity Ratios")
+
+    // ....................... Current Ratio [10]
+    table.cell(fundamental_table, row = 1, column = 10, text = "C-Ratio", text_color = black)              // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 10, text = "(%)", text_color = black)              // Current Ratio
+    table.cell(fundamental_table, row = 3, column = 10, text = currentRatioTable, text_color = black)            // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 10, tooltip = "Current Ratio")   
+    // ....................... Acid Test/ Quick Ratio [11]
+    table.cell(fundamental_table, row = 1, column = 11, text = "Q-Ratio", text_color = black)                // Quick Ratio 
+(LABEL)
+    table.cell(fundamental_table, row = 2, column = 11, text = "(%)", text_color = black)                // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 11, text = quickRatioTable, text_color = black)              // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 11, tooltip = "Quick Ratio")                     // TIPS
+    // ....................... Receivable Turnover [12]
+    table.cell(fundamental_table, row = 1, column = 12, text = "AR-Turnover", text_color = black)                                        
+// Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 2, column = 12, text = "(D)", text_color = black) 
+    table.cell(fundamental_table, row = 3, column = 12, text = receivableTurnoverTable, text_color = black)                                      
+// Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 12, tooltip = "Receivable Turnover")                                             
+// TIPS
+    // ....................... Collection Period [13]
+    table.cell(fundamental_table, row = 1, column = 13, text = "Collect. Period", text_color = black)      // Quick Ratio 
+(LABEL)
+    table.cell(fundamental_table, row = 2, column = 13, text = "(D)", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 13, text = collectionPeriodTable, text_color = black)        // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 13, tooltip = "Collection Period in Days")       // TIPS
+    // ....................... Inventory Turnover [14]
+    table.cell(fundamental_table, row = 1, column = 14, text = "MI-Turnover", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 2, column = 14, text = "(D)", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 14, text = inventoryTurnoverTable, text_color = black)       // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 14, tooltip = "Inventory Turnover in Days")       // TIPS
+    
+    // ************************************************** SOLVENCY RATIOS
+    //debtToAsset,interestCoverage,freeCashFlow
+    debtToAssetTable=str.tostring(debtToAsset)                                                      // String Conversion
+    freeCashFlowTable=str.tostring(freeCashFlow)                                                    // String Conversion
+    interestCoverageTable=str.tostring(interestCoverage)                                            // String Conversion
+    
+    table.cell(fundamental_table, row = 0, column = 15, text = "SOLV", text_color = blue, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 0, column = 16, text = "ENCY", text_color = blue, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 0, column = 17, text = "Ratios", text_color = blue, bgcolor = solvency_bg_color)
+
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 15, tooltip = "Solvency Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 16, tooltip = "Solvency Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 17, tooltip = "Solvency Ratios")
+    
+    // ....................... Debt to Asset
+    table.cell(fundamental_table, row = 1, column = 15, text = "DebtToAsset", text_color = black, bgcolor = solvency_bg_color)             
+// Debt to Asset
+    table.cell(fundamental_table, row = 2, column = 15, text = "(%)", text_color = black, bgcolor = solvency_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 15, text = debtToAssetTable, text_color = black, bgcolor = 
+solvency_bg_color)                // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 15, tooltip = "Debt To Asset")                      // Hover and 
+"TIPs"
+    // ....................... Interest Coverage
+    table.cell(fundamental_table, row = 1, column = 16, text = "Int. Coverage", text_color = black, bgcolor = solvency_bg_color)           
+// Interest Coverage
+    table.cell(fundamental_table, row = 2, column = 16, text = "Times", text_color = black, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 3, column = 16, text = interestCoverageTable, text_color = black, bgcolor = 
+solvency_bg_color)         // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 16, tooltip = "Interest Coverage")                // TIPS
+    // ....................... Free Cash Flows
+    table.cell(fundamental_table, row = 1, column = 17, text = "FCF", text_color = black, bgcolor = solvency_bg_color)          
+// Free Cash Flow
+    table.cell(fundamental_table, row = 2, column = 17, text = "(M)", text_color = black, bgcolor = solvency_bg_color)          
+// Free Cash Flow
+    table.cell(fundamental_table, row = 3, column = 17, text = freeCashFlowTable, text_color = black, bgcolor = 
+solvency_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 17, tooltip = "Free Cash-Flow in Millions")       // TIPS
+    // closer = close
+    
+//fundamental_analysis_v01(period,closer,grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity,currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover,debtToAsset,interestCoverage,freeCashFlow)
+
+
+
+
+
+
+export naked_analysis (simple string ticker_symbol,series float closer, series float grossMargin,series float 
+operatingMargin,series float profitMargin,series float assetTurnover,series float returnOnAssets,series float payoutRatio,series 
+float earningsPerShare,series float returnOnEquity,series float currentRatio,series float quickRatio,series float 
+changeAccontsReceivable,series float currentAccountsReceivable,series float netSales,series float inventoryTurnover,series float 
+debtToAsset,series float interestCoverage,series float freeCashFlow)=>
+    // ************************************************** PROFITABILITY RATIOS
+    //grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity
+    grossMarginTable=str.tostring(grossMargin)                                                          // String Conversion
+    operatingMarginTable=str.tostring(operatingMargin)                                                  // String Conversion
+    profitMarginTable=str.tostring(profitMargin)                                                        // String Conversion
+    assetTurnoverTable=str.tostring(assetTurnover)                                                      // String Conversion
+    returnOnAssetsTable=str.tostring(returnOnAssets)                                                    // String Conversion
+    returnOnEquityTable=str.tostring(returnOnEquity)                                                    // String Conversion
+    earningsPerShareTable=str.tostring(earningsPerShare)                                                // String Conversion
+    priceEarnings=math.round((closer / earningsPerShare),2)                                              // Requesting Data
+    priceEarningsTable=str.tostring(priceEarnings)                                                      // 
+    payoutRatioTable=str.tostring(payoutRatio)                                                          // String Conversion
+    
+    
+    profitability_bg_color = color.new(color.blue,80)
+    liquidity_bg_color = color.new(color.blue,80)
+    solvency_bg_color = color.new(color.blue,80)
+    
+    // Row 0: Name of the Row    
+    fundamental_table = table.new(position = position.bottom_left, rows = 5, columns = 21, bgcolor = color.yellow, 
+border_width=0)
+    //table.cell(fundamental_table, row = 2, column = 0, text = period, text_color = color.blue)
+    table.cell(fundamental_table, row = 3, column = 0, text = ticker_symbol, text_color = color.blue)
+    
+
+    table.cell(fundamental_table, row = 3, column = 1, text = grossMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 1, tooltip = "Gross Margin")                   // TIPS
+    // ....................... Operating Margin [2]
+    table.cell(fundamental_table, row = 3, column = 2, text = operatingMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 2, tooltip = "Operating Margin")                   // TIPS
+    // ....................... Profit Margin [3]
+    table.cell(fundamental_table, row = 3, column = 3, text = profitMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 3, tooltip = "Profit Margin")                   // TIPS
+    // ....................... Asset Turnover [4]
+    table.cell(fundamental_table, row = 3, column = 4, text = assetTurnoverTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 4, tooltip = "Asset Turnover: Sales/Total Asset")                      
+// TIPS
+    // ....................... Return On Assets [5]
+    table.cell(fundamental_table, row = 3, column = 5, text = returnOnAssetsTable, text_color = black, bgcolor = 
+profitability_bg_color)              // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 5, tooltip = "Return On Assets (%)")                // TIPS
+    // ....................... Return On Equity [6]
+    table.cell(fundamental_table, row = 3, column = 6, text = returnOnEquityTable, text_color = black, bgcolor = 
+profitability_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 6, tooltip = "Return On Equity (%)")               // TIPS
+    // ....................... Earnings Per Share [7]
+    table.cell(fundamental_table, row = 3, column = 7, text = earningsPerShareTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 7, tooltip = "Earnings Per Share")                  // TIPS
+    // ....................... Price Earnings [8]
+    table.cell(fundamental_table, row = 3, column = 8, text = priceEarningsTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 8, tooltip = "Price to Earnings")                  // TIPS
+    // ....................... Payout Ratio [9]
+    table.cell(fundamental_table, row = 3, column = 9, text = payoutRatioTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 9, tooltip = "Payout Ratio")                  // TIPS
+    
+    
+    
+    
+    // ************************************************** LIQUIDITY RATIOS
+    // currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover
+    currentRatioTable=str.tostring(currentRatio)                                                    // String Conversion
+    quickRatioTable=str.tostring(quickRatio)                                                        // String Conversion
+    receivableTurnover = 
+math.round(netSales/(((currentAccountsReceivable-changeAccontsReceivable)+currentAccountsReceivable)/2),2) // Receivable 
+Turnover
+    receivableTurnoverTable=str.tostring(receivableTurnover)                                                                        
+// String Conversion
+    collectionPeriod = math.round(daysInOneYear/receivableTurnover)                                 // Calculations plus 
+rounding                    
+    collectionPeriodTable=str.tostring(collectionPeriod)                                            // String Conversion 
+    inventoryTurnoverTable=str.tostring(inventoryTurnover)                                          // String Conversion
+
+    // ....................... Current Ratio [10]
+    table.cell(fundamental_table, row = 3, column = 10, text = currentRatioTable, text_color = black)            // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 10, tooltip = "Current Ratio")   
+    // ....................... Acid Test/ Quick Ratio [11]
+      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 11, text = quickRatioTable, text_color = black)              // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 11, tooltip = "Quick Ratio")                     // TIPS
+    // ....................... Receivable Turnover [12]
+
+    table.cell(fundamental_table, row = 3, column = 12, text = receivableTurnoverTable, text_color = black)                                      
+// Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 12, tooltip = "Receivable Turnover")                                             
+// TIPS
+    // ....................... Collection Period [13]
+
+    table.cell(fundamental_table, row = 3, column = 13, text = collectionPeriodTable, text_color = black)        // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 13, tooltip = "Collection Period in Days")       // TIPS
+    // ....................... Inventory Turnover [14]
+    table.cell(fundamental_table, row = 3, column = 14, text = inventoryTurnoverTable, text_color = black)       // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 14, tooltip = "Inventory Turnover in Days")       // TIPS
+    
+    // ************************************************** SOLVENCY RATIOS
+    //debtToAsset,interestCoverage,freeCashFlow
+    debtToAssetTable=str.tostring(debtToAsset)                                                      // String Conversion
+    freeCashFlowTable=str.tostring(freeCashFlow)                                                    // String Conversion
+    interestCoverageTable=str.tostring(interestCoverage)                                            // String Conversion
+    
+
+    // ....................... Debt to Asset
+    table.cell(fundamental_table, row = 3, column = 15, text = debtToAssetTable, text_color = black, bgcolor = 
+solvency_bg_color)                // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 15, tooltip = "Debt To Asset")                      // Hover and 
+"TIPs"
+    // ....................... Interest Coverage
+    table.cell(fundamental_table, row = 3, column = 16, text = interestCoverageTable, text_color = black, bgcolor = 
+solvency_bg_color)         // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 16, tooltip = "Interest Coverage")                // TIPS
+    // ....................... Free Cash Flows
+    table.cell(fundamental_table, row = 3, column = 17, text = freeCashFlowTable, text_color = black, bgcolor = 
+solvency_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 17, tooltip = "Free Cash-Flow in Millions")       // TIPS
+
+
+export fundamental_analysis (simple string period,simple string ticker_symbol,series float closer, series float 
+grossMargin,series float operatingMargin,series float profitMargin,series float assetTurnover,series float returnOnAssets,series 
+float payoutRatio,series float earningsPerShare,series float returnOnEquity,series float currentRatio,series float 
+quickRatio,series float changeAccontsReceivable,series float currentAccountsReceivable,series float netSales,series float 
+inventoryTurnover,series float debtToAsset,series float interestCoverage,series float freeCashFlow)=>
+    // ************************************************** PROFITABILITY RATIOS
+    //grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity
+    grossMarginTable=str.tostring(grossMargin)                                                          // String Conversion
+    operatingMarginTable=str.tostring(operatingMargin)                                                  // String Conversion
+    profitMarginTable=str.tostring(profitMargin)                                                        // String Conversion
+    assetTurnoverTable=str.tostring(assetTurnover)                                                      // String Conversion
+    returnOnAssetsTable=str.tostring(returnOnAssets)                                                    // String Conversion
+    returnOnEquityTable=str.tostring(returnOnEquity)                                                    // String Conversion
+    earningsPerShareTable=str.tostring(earningsPerShare)                                                // String Conversion
+    priceEarnings=math.round((closer / earningsPerShare),2)                                              // Requesting Data
+    priceEarningsTable=str.tostring(priceEarnings)                                                      // 
+    payoutRatioTable=str.tostring(payoutRatio)                                                          // String Conversion
+    
+    
+    profitability_bg_color = color.new(color.blue,80)
+    liquidity_bg_color = color.new(color.blue,80)
+    solvency_bg_color = color.new(color.blue,80)
+    
+    // Row 0: Name of the Row    
+    fundamental_table = table.new(position = position.bottom_left, rows = 5, columns = 21, bgcolor = color.yellow, 
+border_width=0)
+    table.cell(fundamental_table, row = 1, column = 0, text = "Period?", text_color = color.blue)
+    table.cell(fundamental_table, row = 2, column = 0, text = period, text_color = color.blue)
+    table.cell(fundamental_table, row = 3, column = 0, text = ticker_symbol, text_color = color.blue)
+    
+    table.cell(fundamental_table, row = 0, column = 1, text = "P", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 2, text = "R", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 3, text = "O", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 4, text = "F", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 5, text = "I", text_color = color.blue, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 0, column = 6, text = "T", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 7, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 8, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 0, column = 9, text = " ", text_color = color.blue, bgcolor = profitability_bg_color) 
+
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 1, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 2, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 3, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 4, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 5, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 6, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 7, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 8, tooltip = "Profitability Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 9, tooltip = "Profitability Ratios")
+    // ....................... Gross Margin [1]
+    table.cell(fundamental_table, row = 1, column = 1, text = "G-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 1, text = "(%)", text_color = black, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 1, text = grossMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 1, tooltip = "Gross Margin")                   // TIPS
+    // ....................... Operating Margin [2]
+    table.cell(fundamental_table, row = 1, column = 2, text = "O-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 2, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 2, text = operatingMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 2, tooltip = "Operating Margin")                   // TIPS
+    // ....................... Profit Margin [3]
+    table.cell(fundamental_table, row = 1, column = 3, text = "P-Margin", text_color = black, bgcolor = profitability_bg_color)              
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 3, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 3, text = profitMarginTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 3, tooltip = "Profit Margin")                   // TIPS
+    // ....................... Asset Turnover [4]
+    table.cell(fundamental_table, row = 1, column = 4, text = "A-Turnover", text_color = black, bgcolor = 
+profitability_bg_color)              // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 4, text = "(n.a.)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 4, text = assetTurnoverTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 4, tooltip = "Asset Turnover: Sales/Total Asset")                      
+// TIPS
+    // ....................... Return On Assets [5]
+    table.cell(fundamental_table, row = 1, column = 5, text = "ROA", text_color = black, bgcolor = profitability_bg_color)           
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 5, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 5, text = returnOnAssetsTable, text_color = black, bgcolor = 
+profitability_bg_color)              // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 5, tooltip = "Return On Assets (%)")                // TIPS
+    // ....................... Return On Equity [6]
+    table.cell(fundamental_table, row = 1, column = 6, text = "ROE", text_color = black, bgcolor = profitability_bg_color)          
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 6, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 6, text = returnOnEquityTable, text_color = black, bgcolor = 
+profitability_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 6, tooltip = "Return On Equity (%)")               // TIPS
+    // ....................... Earnings Per Share [7]
+    table.cell(fundamental_table, row = 1, column = 7, text = "EPS", text_color = black, bgcolor = profitability_bg_color)            
+// Current Ratio
+    table.cell(fundamental_table, row = 2, column = 7, text = "", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 7, text = earningsPerShareTable, text_color = black, bgcolor = 
+profitability_bg_color)            // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 7, tooltip = "Earnings Per Share")                  // TIPS
+    // ....................... Price Earnings [8]
+    table.cell(fundamental_table, row = 1, column = 8, text = "PE", text_color = black, bgcolor = profitability_bg_color)                
+// Current Ratio                                                   // String Conversion
+    table.cell(fundamental_table, row = 2, column = 8, text = "", text_color = black, bgcolor = profitability_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 8, text = priceEarningsTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 8, tooltip = "Price to Earnings")                  // TIPS
+    // ....................... Payout Ratio [9]
+    table.cell(fundamental_table, row = 1, column = 9, text = "PayoutRatio", text_color = black, bgcolor = 
+profitability_bg_color)                // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 9, text = "(%)", text_color = black, bgcolor = profitability_bg_color)
+    table.cell(fundamental_table, row = 3, column = 9, text = payoutRatioTable, text_color = black, bgcolor = 
+profitability_bg_color)               // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 9, tooltip = "Payout Ratio")                  // TIPS
+    
+    
+    
+    
+    // ************************************************** LIQUIDITY RATIOS
+    // currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover
+    currentRatioTable=str.tostring(currentRatio)                                                    // String Conversion
+    quickRatioTable=str.tostring(quickRatio)                                                        // String Conversion
+    receivableTurnover = 
+math.round(netSales/(((currentAccountsReceivable-changeAccontsReceivable)+currentAccountsReceivable)/2),2) // Receivable 
+Turnover
+    receivableTurnoverTable=str.tostring(receivableTurnover)                                                                        
+// String Conversion
+    collectionPeriod = math.round(daysInOneYear/receivableTurnover)                                 // Calculations plus 
+rounding                    
+    collectionPeriodTable=str.tostring(collectionPeriod)                                            // String Conversion 
+    inventoryTurnoverTable=str.tostring(inventoryTurnover)                                          // String Conversion
+    
+    table.cell(fundamental_table, row = 0, column = 10, text = "LI", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 11, text = "QU", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 12, text = "ID", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 13, text = "IT", text_color = color.blue)
+    table.cell(fundamental_table, row = 0, column = 14, text = "Y", text_color = color.blue)
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 10, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 11, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 12, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 13, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 14, tooltip = "Liquidity Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 15, tooltip = "Liquidity Ratios")
+
+    // ....................... Current Ratio [10]
+    table.cell(fundamental_table, row = 1, column = 10, text = "C-Ratio", text_color = black)              // Current Ratio
+    table.cell(fundamental_table, row = 2, column = 10, text = "(%)", text_color = black)              // Current Ratio
+    table.cell(fundamental_table, row = 3, column = 10, text = currentRatioTable, text_color = black)            // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 10, tooltip = "Current Ratio")   
+    // ....................... Acid Test/ Quick Ratio [11]
+    table.cell(fundamental_table, row = 1, column = 11, text = "Q-Ratio", text_color = black)                // Quick Ratio 
+(LABEL)
+    table.cell(fundamental_table, row = 2, column = 11, text = "(%)", text_color = black)                // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 11, text = quickRatioTable, text_color = black)              // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 11, tooltip = "Quick Ratio")                     // TIPS
+    // ....................... Receivable Turnover [12]
+    table.cell(fundamental_table, row = 1, column = 12, text = "AR-Turnover", text_color = black)                                        
+// Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 2, column = 12, text = "(D)", text_color = black) 
+    table.cell(fundamental_table, row = 3, column = 12, text = receivableTurnoverTable, text_color = black)                                      
+// Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 12, tooltip = "Receivable Turnover")                                             
+// TIPS
+    // ....................... Collection Period [13]
+    table.cell(fundamental_table, row = 1, column = 13, text = "Collect. Period", text_color = black)      // Quick Ratio 
+(LABEL)
+    table.cell(fundamental_table, row = 2, column = 13, text = "(D)", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 13, text = collectionPeriodTable, text_color = black)        // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 13, tooltip = "Collection Period in Days")       // TIPS
+    // ....................... Inventory Turnover [14]
+    table.cell(fundamental_table, row = 1, column = 14, text = "MI-Turnover", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 2, column = 14, text = "(D)", text_color = black)      // Quick Ratio (LABEL)
+    table.cell(fundamental_table, row = 3, column = 14, text = inventoryTurnoverTable, text_color = black)       // Adding the 
+datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 14, tooltip = "Inventory Turnover in Days")       // TIPS
+    
+    // ************************************************** SOLVENCY RATIOS
+    //debtToAsset,interestCoverage,freeCashFlow
+    debtToAssetTable=str.tostring(debtToAsset)                                                      // String Conversion
+    freeCashFlowTable=str.tostring(freeCashFlow)                                                    // String Conversion
+    interestCoverageTable=str.tostring(interestCoverage)                                            // String Conversion
+    
+    table.cell(fundamental_table, row = 0, column = 15, text = "SOLV", text_color = blue, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 0, column = 16, text = "ENCY", text_color = blue, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 0, column = 17, text = "Ratios", text_color = blue, bgcolor = solvency_bg_color)
+
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 15, tooltip = "Solvency Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 16, tooltip = "Solvency Ratios")
+    table.cell_set_tooltip(fundamental_table, row = 0, column = 17, tooltip = "Solvency Ratios")
+    
+    // ....................... Debt to Asset
+    table.cell(fundamental_table, row = 1, column = 15, text = "DebtToAsset", text_color = black, bgcolor = solvency_bg_color)             
+// Debt to Asset
+    table.cell(fundamental_table, row = 2, column = 15, text = "(%)", text_color = black, bgcolor = solvency_bg_color) 
+    table.cell(fundamental_table, row = 3, column = 15, text = debtToAssetTable, text_color = black, bgcolor = 
+solvency_bg_color)                // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 15, tooltip = "Debt To Asset")                      // Hover and 
+"TIPs"
+    // ....................... Interest Coverage
+    table.cell(fundamental_table, row = 1, column = 16, text = "Int. Coverage", text_color = black, bgcolor = solvency_bg_color)           
+// Interest Coverage
+    table.cell(fundamental_table, row = 2, column = 16, text = "Times", text_color = black, bgcolor = solvency_bg_color)
+    table.cell(fundamental_table, row = 3, column = 16, text = interestCoverageTable, text_color = black, bgcolor = 
+solvency_bg_color)         // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 16, tooltip = "Interest Coverage")                // TIPS
+    // ....................... Free Cash Flows
+    table.cell(fundamental_table, row = 1, column = 17, text = "FCF", text_color = black, bgcolor = solvency_bg_color)          
+// Free Cash Flow
+    table.cell(fundamental_table, row = 2, column = 17, text = "(M)", text_color = black, bgcolor = solvency_bg_color)          
+// Free Cash Flow
+    table.cell(fundamental_table, row = 3, column = 17, text = freeCashFlowTable, text_color = black, bgcolor = 
+solvency_bg_color)             // Adding the datum into the table
+    table.cell_set_tooltip(fundamental_table, row = 3, column = 17, tooltip = "Free Cash-Flow in Millions")       // TIPS
+
+ticker_prefix = input.string("TSX:", "Prefix",options=["TSX:","NYSE:","NASDAQ:","NEO:","ARCA:"])
+ticker_manual = input.string("ABX")
+symbol_2= ticker_prefix+ticker_manual//"TSX:NGT"
+ticker_2 = ticker_manual
+closer_2 = request.security(symbol_2, "D", close)
+// solvency ratio
+debt_to_asset = math.round(request.financial(symbol_2, "DEBT_TO_ASSET", period)*100,2)                      // Debt to Asset 
+Ratio
+interest_coverage = math.round(request.financial(symbol_2, "INTERST_COVER", period),2)                 // Interest Coverage 
+free_cashflow = math.round(request.financial(symbol_2, "FREE_CASH_FLOW", period)/million,2)            // Free Cash Flow
+
+// liquidity ratio
+current_ratio = math.round(request.financial(symbol_2, "CURRENT_RATIO", period),2)                     // Current Ratio
+quick_ratio = math.round(request.financial(symbol_2, "QUICK_RATIO", period),2)                         // Quick Ratio
+change_acconts_receivable= request.financial(symbol_2, "CHANGE_IN_ACCOUNTS_RECEIVABLE", period)         // Delta AR
+current_accounts_receivable= request.financial(symbol_2, "ACCOUNTS_RECEIVABLES_NET", period)            // AR
+net_sales =request.financial(symbol_2, "TOTAL_REVENUE", period)                                        // Total revenue aka 
+Sales
+inventory_turnover = math.round(request.financial(symbol_2, "INVENT_TURNOVER", period),2)              // Inventory Turnover
+
+
+
+//profitability
+gross_margin=math.round(request.financial(symbol_2, "GROSS_MARGIN", period),2)                         // Gross Margin (net 
+sales/ sales)
+operating_margin=math.round(request.financial(symbol_2, "OPERATING_MARGIN", period),2)                 // Operating Margin
+profit_margin=math.round(request.financial(symbol_2, "NET_MARGIN", period),2)                          // Net Margin (net 
+income/sales or revenue)
+asset_turnover=math.round(request.financial(symbol_2, "ASSET_TURNOVER", period),2)                     // Asset turnover
+return_on_assets=math.round(request.financial(symbol_2, "RETURN_ON_ASSETS", period),2)                  // Return on Assets
+return_on_equity=math.round(request.financial(symbol_2, "RETURN_ON_EQUITY", period),2)                  // Return on Equity
+earnings_per_share=math.round(request.financial(symbol_2, "EARNINGS_PER_SHARE_BASIC", period),2)        // Earnings Per Share
+payout_ratio=math.round(request.financial(symbol_2, "DIVIDEND_PAYOUT_RATIO", period) ,2)               // Dividend Payout Ratio
+
+
+
+//naked_analysis(ticker_2,closer_2,gross_margin,operating_margin,profit_margin,asset_turnover,return_on_assets,payout_ratio,earnings_per_share,return_on_equity,current_ratio,quick_ratio,change_acconts_receivable,current_accounts_receivable,net_sales,inventory_turnover,debt_to_asset,interest_coverage,free_cashflow)
+
+fundamental_analysis(period,ticker_2,closer_2,gross_margin,operating_margin,profit_margin,asset_turnover,return_on_assets,payout_ratio,earnings_per_share,return_on_equity,current_ratio,quick_ratio,change_acconts_receivable,current_accounts_receivable,net_sales,inventory_turnover,debt_to_asset,interest_coverage,free_cashflow)
+
+
+
+fundamental_analysis_v01(period,close,grossMargin,operatingMargin,profitMargin,assetTurnover,returnOnAssets,payoutRatio,earningsPerShare,returnOnEquity,currentRatio,quickRatio,changeAccontsReceivable,currentAccountsReceivable,netSales,inventoryTurnover,debtToAsset,interestCoverage,freeCashFlow)

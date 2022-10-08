@@ -1,0 +1,541 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+// @version=5
+
+// "As he said, 'It aint much, but it's honest work'" Source: Accessed on June 16, 2022. 
+https://en.meming.world/wiki/But_It's_Honest_Work
+// RSI and MACD are oscilator Indicator and the MA is a lagging indicator.
+// This means the data does not suggest but shows where the price is.
+// Feel free to use it at your own discretion.
+
+
+indicator(title="BMI_PRO_4khansolo", overlay=true)
+// AKA "Bearish Market Indicator 4khansolo"
+
+// Importing Index Module
+import fourkhansolo/L_Index_4khansolo/7 as index
+// Imporing Beta
+import fourkhansolo/L_Beta/6 as beta 
+// Importing MMRI
+import fourkhansolo/MMRI_4khansolo/2 as mmri
+// Importing Volume Module 
+import fourkhansolo/volume_anal/1 as vol
+// Importing CAPM Module 
+import fourkhansolo/L_CAPM/2 as capm
+
+// ************************************************************ Moving Averages 
+******************************************************************************************************************************
+// ........................................ MA Color 
+.............................................................................. .. 
+// ........................................ MA Summary 
+.............................................................................. .. 
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... 52D  MA                   Weak              White
+// ...................................... 200D MA                   Weak              Orange
+// ...................................... Both MA(s)                Weak              Red
+
+// ........................................ Grabbing Data ........................................
+// Invoking the pre-defined functions from Trading View
+ma20=ta.sma(close,20)
+ma50=ta.sma(close,50)
+ma100=ta.sma(close,100)
+ma200=ta.sma(close,200)
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Plotting the functions. 50, 200 Moving Averages Respectively
+pma50=plot(ma50,color=color.new(color.green,40),title="ma50")
+pma100=plot(ma100,color=color.new(color.yellow,60),title="ma100")
+pma200=plot(ma200,color=color.new(color.orange,60),title="ma200")
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Indication for weak signals based on the Moving Averages (MAs)
+ma50Close=ta.crossover(ma50,close)
+ma200Close=ta.crossover(ma200,close)
+ma50And200Close=(ma50 >=close) and (ma200 >= close)
+ma50Less200=ma200>ma50
+
+ma_color = index.ma_color( ma50, ma200)
+
+// ************************************************************ Parameter for Bearish Market Definition 
+******************************************************************************************************************************************************
+// ........................................ Parameters for Bearish Market 
+.....................................................................................................................................................
+// Added Options for the Days of the Year ( Market Days Opened)
+bmi_period = input.int(251, title="BMI-Period", options=[250,251,252,253,254,255,256,257,258,259,260])
+fiftyWeekHigh = ta.highest(high,bmi_period)
+week52HighPlus = fiftyWeekHigh*(1.02)                   // This will be give a margin for displaying the RSI
+
+week52High = plot(week52HighPlus,display=display.none)//color=color.teal)      //,display=display.none, title="~52WHigh")// This 
+hides the value from displaying
+plot(fiftyWeekHigh, "52 Week High",color=color.teal)      //,display=display.none, title="~52WHigh")// This hides the value from 
+displaying
+
+fiftyWeekLow = ta.lowest(low,bmi_period)
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/concepts/Inputs.html?highlight=input#integer-input
+// This is the value that will be used for checking with the closing
+// Basically, if the close (closing price) is less or equal to the value below, then we'll basically prompt it to put a purple 
+flash
+bearishTesterValue=fiftyWeekHigh*(1-0.2)
+// Source: Retrieved as of June 11, 2022. https://www.investopedia.com/terms/b/bearmarket.asp
+// Source: Retrieved as of June 11, 2022. https://www.fool.com/investing/how-to-invest/bear-market/
+
+// ************************************************************  Filling 
+************************************************************************************************************************  
+// This portion is highighlighting if the close touches the BMI value or the bearish tester value
+// ...................................... Indicator                 Strength      Color Highlight
+// ...................................... ~52 Week High > Close     Weak          Purple
+bearishMarketDefinition= if bearishTesterValue >= close
+    color.new(color.purple,0)
+else
+    na
+
+deduction=bearishTesterValue*.01 // 1 percent deduction as this will be proportionate
+parameterTwo = plot(bearishTesterValue-deduction, display=display.none, title="fillerMACD") // this is a secondary parameter for 
+the filling
+
+// ........................................ Fill em' up!  
+................................................................................ 
+colorBearish=bearishMarketDefinition
+// This will basically change the color for highlighting for either 50 or 200 MA or BMI-value
+// source: Retrieved as of June 12, 2022. https://www.tradingview.com/pine-script-docs/en/v5/concepts/Fills.html?highlight=fill
+
+// highlight if the close (price) is lower or equal to the 20% lower from the recent highs
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+
+// Ploting the value 
+bearishValuePlot1=plot(bearishTesterValue*0.98, color=color.new(color.yellow,10),title="BMI_Value")
+// Source: Retrieved as of June 11, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Built-ins.html#introduction
+week52LowPlot1=plot(fiftyWeekLow*0.99,display=display.none)
+week52LowPlot2=plot(fiftyWeekLow*0.98,display=display.none)
+
+
+
+
+// Top Bound for bearish {parm has not been activated}
+bound1= plot(bearishTesterValue*2,display=display.none,title="fillerRSI")
+fiftyWeekLowPlot=plot(fiftyWeekLow,title="~52WLow", color=color.new(color.teal,10))//,display=display.none
+zeroMuch=plot(0, display=display.none,title="Zero")
+
+//fill(bearishValuePlot1,parameterTwo, color=macdColor, title="MACD FILLED")
+
+
+
+
+
+
+
+// Filling the RSI signal over the ~52 week high
+fiftyWeekHighPLus=(fiftyWeekHigh*1.01) 
+rsiPlot1=plot(fiftyWeekHighPLus,display=display.none,title="RSI_Filler2")//color=rsiColor, linewidth=5)
+//fill(week52High,rsiPlot1, color=rsiColor, title="RSI_Filled")
+fill(week52High,rsiPlot1, color=colorBearish, title="Bearish Filled")
+
+
+// ...................................... Filling based on BMI {A little complicated}
+fiftyWeekHighPlot=fiftyWeekHighPLus*1.01
+bearishPlot1=plot(fiftyWeekHighPlot,display=display.none,title="MACD_Filler2")
+
+//fill(bearishPlot1,bound1, color=colorBearish, title="Bearish Upper Bound") // more documentation will arise
+//fill(week52LowPlot2,zeroMuch, color=colorBearish, title="Bearish Lower Bound")
+
+
+//fill(week52LowPlot1,week52LowPlot2, color=ma_color, title="MA FILLED")
+
+// ************************************************************. BETA 
+************************************************************************************************************************
+// ..................................... Calculating .......................................................................... 
+index_select = input.session("Auto", "Index Chooser", options=["Auto","TSX", "SPX", 
+"IXIC","W4500","TXOE","WTI1!","Gold","Silver","DXY","CXY","EXY","BXY"])
+multiplier = input.int(1, "Multiplier: 1,2,3,5,10,20,30", options=[1,2,3,5,10,20,30])
+interval = input.session("Auto", "Day | Week | Month | Quarter | Year", options=["Auto","D", "W", "M","3M","12M"])
+intervals = beta.timeframe_auto_select(interval)
+index_name=beta.index_auto_select(index_select)
+stock_id = syminfo.tickerid
+stock_name = syminfo.ticker
+multiplier_string = str.tostring(multiplier)
+//closing_price=
+current_stock_price = request.security(stock_id,intervals,close)//syminfo.tickerid
+current_index_price = request.security(index_name,intervals,close,currency=syminfo.currency)//syminfo.tickerid
+
+length =capm.le_length(intervals)
+[stock_delta,stock_delta_percent] = capm.delta_price(current_stock_price)// delta based on daily/w/m
+[index_delta,index_delta_percent] = capm.delta_price(current_index_price)// delta based on daily
+
+
+// Annualized Returns 
+[stock_annual_return,stock_annual_return_percent,index_annual_return,index_annual_return_percent] = 
+capm.annual_returns(current_stock_price,current_index_price,length)
+// Returns during the length or the period
+[stock_annualized_returns,index_annualized_returns] = 
+capm.boxed(stock_annual_return_percent,index_annual_return_percent,multiplier)
+// String Conversion
+stock_annual_return_percent_string = str.tostring(math.round(stock_annual_return_percent,2))
+index_annual_return_percent_string = str.tostring(math.round(index_annual_return_percent,2))
+
+stock_returns_var_string = str.tostring(math.round(stock_annualized_returns,2)) // supposed CAPM Ish Value just before capm
+index_returns_var_string = str.tostring(math.round(index_annualized_returns,2))
+
+
+// ********************************** Beta ********************************************************************
+beta = 
+beta.beta(stock_delta,index_delta,length)//ta.stdev(stock_yearly_returns,length)*ta.correlation(stock_yearly_returns,index_yearly_returns,length)/ta.stdev(index_yearly_returns,length)
+beta_string = str.tostring(math.round(beta,2))
+correlation = ta.correlation(stock_delta,index_delta,length)
+correlation_string = str.tostring(math.round(correlation,4))
+// ********************************** CAPM ********************************************************************
+multiplier_stringer = capm.bond_name_converter(multiplier)//str.tostring(multiplier)
+
+multiplier_bond_yield = request.security(index.countrySelect()+str.tostring((multiplier_stringer)), intervals, close)  //"10Y"                                         
+// 1 Day Default Settings
+
+red = color.red
+capm_expected_rate_of_return = capm.capm(multiplier_bond_yield, beta , index_annualized_returns)//stock_annualized_returns
+//plot(capm_expected_rate_of_return,"CAPM:expected returns", style=plot.style_histogram,color= 
+index.positron(capm_expected_rate_of_return) )
+capm_string=str.tostring(math.round(capm_expected_rate_of_return,4))
+no_capm = capm.capm(multiplier_bond_yield,1,stock_annualized_returns)
+//plot(no_capm,"Non-CAPM", color= index.positron(no_capm) )
+// ************************************************************ Dependencies 
+************************************************************
+// ............................................... Plotting the reference points aka the lines 
+..............................................................................................
+density = 70
+tealColor=color.new(color.teal,density)
+redColor=color.new(color.red,density)
+orangeColor=color.new(color.orange,density)
+yellowColor=color.new(color.yellow,density)
+blackColor = color.black
+whiteColor = color.white
+
+// ............................................... Used in the Technical Indicators 
+..............................................................................................
+close_d = request.security(syminfo.tickerid, "D", close)
+close_w = request.security(syminfo.tickerid, "W", close)
+close_m = request.security(syminfo.tickerid, "M", close)
+
+open_d = request.security(syminfo.tickerid, "D", open)
+open_w = request.security(syminfo.tickerid, "W", open)
+open_m = request.security(syminfo.tickerid, "M", open) 
+
+
+// ************************************************************************ Technical Indicators 
+************************************************************************************************************************************************
+// ************************************************************ RSI  
+************************************************************************************************************************
+rsi_normal = ta.rsi(close,14)
+rsi_ma_normal = ta.sma(rsi_normal,14)
+
+fourteen_D_RSI = request.security(syminfo.tickerid, "D", rsi_normal)
+fourteen_W_RSI = request.security(syminfo.tickerid, "W", rsi_normal)
+fourteen_M_RSI = request.security(syminfo.tickerid, "M", rsi_normal)
+
+// RSI Based
+fourteen_D_RSI_ma = request.security(syminfo.tickerid, "D", rsi_ma_normal)
+fourteen_W_RSI_ma = request.security(syminfo.tickerid, "W", rsi_ma_normal)
+fourteen_M_RSI_ma = request.security(syminfo.tickerid, "M", rsi_ma_normal)
+
+// RSI Color
+fourteen_D_RSI_color = index.colorRSIfull(fourteen_D_RSI,fourteen_D_RSI_ma)
+fourteen_W_RSI_color = index.colorRSIfull(fourteen_W_RSI,fourteen_W_RSI_ma)
+fourteen_M_RSI_color = index.colorRSIfull(fourteen_M_RSI,fourteen_M_RSI_ma)
+
+// RSI: String Conversion
+fourteen_D_RSI_string= str.tostring(math.round(fourteen_D_RSI,2))  
+fourteen_W_RSI_string= str.tostring(math.round(fourteen_W_RSI,2))
+fourteen_M_RSI_string= str.tostring(math.round(fourteen_M_RSI,2))
+
+// RSI-MA: String Conversion
+fourteen_D_RSI_ma_string= str.tostring(math.round(fourteen_D_RSI_ma,2))  
+fourteen_W_RSI_ma_string= str.tostring(math.round(fourteen_W_RSI_ma,2))  
+fourteen_M_RSI_ma_string= str.tostring(math.round(fourteen_M_RSI_ma,2))  
+
+fourteen_d_rsi_color = if fourteen_D_RSI >= 70
+    color.red
+else if fourteen_D_RSI <= 30
+    color.red
+else
+    color.black
+fourteen_m_rsi_color = if fourteen_M_RSI >= 70
+    color.red
+else if fourteen_M_RSI <= 30
+    color.red
+else
+    color.black
+// ************************************************************ Stochastic RSI  
+************************************************************************************************************************
+normal_daily_k = ta.sma(ta.stoch(rsi_normal, rsi_normal, rsi_normal, 14), 3)
+normal_daily_d = ta.sma(normal_daily_k, 3)
+// Stoch. RSI: K
+fourteen_D_stochastic_RSI_k = request.security(syminfo.tickerid, "D", normal_daily_k)
+fourteen_W_stochastic_RSI_k = request.security(syminfo.tickerid, "W", normal_daily_k)
+fourteen_M_stochastic_RSI_k = request.security(syminfo.tickerid, "M", normal_daily_k)
+
+// Stoch. RSI: D
+fourteen_D_stochastic_RSI_d = request.security(syminfo.tickerid, "D", normal_daily_d)
+fourteen_W_stochastic_RSI_d = request.security(syminfo.tickerid, "W", normal_daily_d)
+fourteen_M_stochastic_RSI_d = request.security(syminfo.tickerid, "M", normal_daily_d)
+
+
+// Stoch. RSI: String Conversion: K
+fourteen_stoch_RSI_D_color =index.colorRSIfull(fourteen_D_stochastic_RSI_k,fourteen_D_stochastic_RSI_d)
+fourteen_stoch_RSI_W_color =index.colorRSIfull(fourteen_W_stochastic_RSI_k,fourteen_W_stochastic_RSI_d)
+fourteen_stoch_RSI_M_color =index.colorRSIfull(fourteen_M_stochastic_RSI_k,fourteen_M_stochastic_RSI_d)
+
+
+// Stoch. RSI: String Conversion: K
+fourteen_D_stoch_RSI_k_string = str.tostring(math.round(fourteen_D_stochastic_RSI_k,2))  
+fourteen_W_stoch_RSI_k_string = str.tostring(math.round(fourteen_W_stochastic_RSI_k,2))
+fourteen_M_stoch_RSI_k_string = str.tostring(math.round(fourteen_M_stochastic_RSI_k,2))
+
+// Stoch. RSI: String Conversion: D
+fourteen_D_stoch_RSI_d_string = str.tostring(math.round(fourteen_D_stochastic_RSI_d,2))  
+fourteen_W_stoch_RSI_d_string = str.tostring(math.round(fourteen_W_stochastic_RSI_d,2))
+fourteen_M_stoch_RSI_d_string = str.tostring(math.round(fourteen_M_stochastic_RSI_d,2))
+
+// ************************************************************ MACD  
+***********************************************************************************************************************
+// ............................................... MACD 
+..............................................................................................
+[macd_normal, signal_normal, histLine_d] = ta.macd(close, 12, 26, 9)
+
+macdLine_d = request.security(syminfo.tickerid, "D", macd_normal)
+signalLine_d = request.security(syminfo.tickerid, "D", signal_normal)
+macdLine_w = request.security(syminfo.tickerid, "W", macd_normal)
+signalLine_w = request.security(syminfo.tickerid, "W", signal_normal)
+macdLine_m = request.security(syminfo.tickerid, "M", macd_normal)
+signalLine_m = request.security(syminfo.tickerid, "M", signal_normal)
+
+// MACD: String Conversion
+macdLine_d_string= str.tostring(math.round(macdLine_d,2))  
+macdLine_w_string= str.tostring(math.round(macdLine_w,2))
+macdLine_m_string= str.tostring(math.round(macdLine_m,2))
+
+signalLine_d_string= str.tostring(math.round(signalLine_d,2))
+signalLine_w_string= str.tostring(math.round(signalLine_w,2))
+signalLine_m_string= str.tostring(math.round(signalLine_m,2))
+
+// MACD Color
+macdLine_d_color = index.colorMACD(macdLine_d,signalLine_d)
+macdLine_w_color = index.colorMACD(macdLine_w,signalLine_w)
+macdLine_m_color = index.colorMACD(macdLine_m,signalLine_m)
+
+
+// ............................................... Moving Average Metrics 
+..............................................................................................
+// MA based on Daily Close
+ma20_d = ta.sma(close_d,20)
+ma50_d = ta.sma(close_d,50)
+ma100_d = ta.sma(close_d,100)
+ma200_d = ta.sma(close_d,200)
+
+// MA 20 based 
+//sma_20_d = request.security(syminfo.tickerid, "D", ma20_d)
+//sma_20_w = request.security(syminfo.tickerid, "W", ma20_d)
+//sma_20_m = request.security(syminfo.tickerid, "M", ma20_d)
+// MA 50 based 
+sma_50_d = request.security(syminfo.tickerid, "D", ma50_d)
+sma_50_w = request.security(syminfo.tickerid, "W", ma50_d)
+sma_50_m = request.security(syminfo.tickerid, "M", ma50_d)
+// MA 100 based 
+sma_100_d = request.security(syminfo.tickerid, "D", ma100_d)
+sma_100_w = request.security(syminfo.tickerid, "W", ma100_d)
+sma_100_m = request.security(syminfo.tickerid, "M", ma100_d)
+// MA 200 based 
+sma_200_d = request.security(syminfo.tickerid, "D", ma200_d)
+sma_200_w = request.security(syminfo.tickerid, "W", ma200_d)
+sma_200_m = request.security(syminfo.tickerid, "M", ma200_d)
+//Color
+//color_sma_20_d = index.colour(close_d,sma_20_d)
+//color_sma_20_w = index.colour(close_w,sma_20_w)
+//color_sma_20_m = index.colour(close_m,sma_20_m)
+color_sma_50_d = index.colour(close_d,sma_50_d)
+color_sma_50_w = index.colour(close_w,sma_50_w)
+color_sma_50_m = index.colour(close_m,sma_50_m)
+color_sma_100_d = index.colour(close_d,sma_100_d)
+color_sma_100_w = index.colour(close_w,sma_100_w)
+color_sma_100_m = index.colour(close_m,sma_100_m)
+color_sma_200_d = index.colour(close_d,sma_200_d)
+color_sma_200_w = index.colour(close_w,sma_200_w)
+color_sma_200_m = index.colour(close_m,sma_200_m)
+
+// String Conversion
+//sma_20_d_string = str.tostring(math.round(((close_d-sma_20_d)/sma_20_d)*100,2))  
+//sma_20_w_string = str.tostring(math.round(((close_w-sma_20_w)/sma_20_w)*100,2)) 
+//sma_20_m_string = str.tostring(math.round(((close_m-sma_20_m)/sma_20_m)*100,2)) 
+sma_50_d_string = str.tostring(math.round(((close_d-sma_50_d)/sma_50_d)*100,2))  
+sma_50_w_string = str.tostring(math.round(((close_w-sma_50_w)/sma_50_w)*100,2)) 
+sma_50_m_string = str.tostring(math.round(((close_m-sma_50_m)/sma_50_m)*100,2)) 
+sma_100_d_string = str.tostring(math.round(((close_d-sma_100_d)/sma_100_d)*100,2))  
+sma_100_w_string = str.tostring(math.round(((close_w-sma_100_w)/sma_100_w)*100,2)) 
+sma_100_m_string = str.tostring(math.round(((close_m-sma_100_m)/sma_100_m)*100,2)) 
+sma_200_d_string = str.tostring(math.round(((close_d-sma_200_d)/sma_200_d)*100,2))  
+sma_200_w_string = str.tostring(math.round(((close_w-sma_200_w)/sma_200_w)*100,2)) 
+sma_200_m_string = str.tostring(math.round(((close_m-sma_200_m)/sma_200_m)*100,2)) 
+
+// ************************************************************ Volume  
+************************************************************************************************************************
+// ............................................... Volume 
+..............................................................................................
+normal_volume = volume
+normal_volume_ma = ta.sma(normal_volume,14)
+volume_d = request.security(syminfo.tickerid, "D", normal_volume)
+volume_w = request.security(syminfo.tickerid, "W", normal_volume)
+volume_m = request.security(syminfo.tickerid, "M", normal_volume)
+
+// Moving average conversion
+volume_ma_d = request.security(syminfo.tickerid, "D", normal_volume_ma)
+volume_ma_w = request.security(syminfo.tickerid, "W", normal_volume_ma)
+volume_ma_m = request.security(syminfo.tickerid, "M", normal_volume_ma)
+
+// OBV: Based on RSI Eval
+color_d_delta_vol = vol.volume_color(open_d,close_d,volume_d, volume_ma_d)///,
+color_w_delta_vol = vol.volume_color(open_w,close_w,volume_w, volume_ma_w)//
+color_m_delta_vol = vol.volume_color(open_m,close_m,volume_m, volume_ma_m)//
+
+volume_delta_d_string= str.tostring(math.round(((volume_d-volume_ma_d)/volume_ma_d)*100,2))  
+volume_delta_w_string= str.tostring(math.round(((volume_w-volume_ma_w)/volume_ma_w)*100,2))  
+volume_delta_m_string= str.tostring(math.round(((volume_m-volume_ma_m)/volume_ma_m)*100,2))  
+
+//  ************************************************************ MMRI  
+************************************************************************************************************************
+dxy = request.security(mmri.currencyIndex(),timeframe.period, close)    // 1 Day Default Settings
+ten_year_yield = if syminfo.currency == currency.USD                    // 
+    "TNX"                                                               // TNX Yield
+else 
+    index.countrySelect()+"10Y"
+tnx = request.security(ten_year_yield, timeframe.period, close) // 1 Day
+[mmri,mmri_color]=mmri.mmri(dxy,tnx)
+mmri_string =str.tostring(math.round(mmri,3))
+
+// ************************************************************ Moving Average 
+************************************************************
+// ............................................... Lagging: Indicators 
+..............................................................................................
+technical_table = table.new(position = position.bottom_left, rows = 4, columns = 10, bgcolor = color.new(color.yellow,60), 
+border_width=2)
+table.cell(technical_table, row = 1, column = 0, text = "D", text_color = whiteColor)
+table.cell(technical_table, row = 2, column = 0, text = "W", text_color = whiteColor)
+table.cell(technical_table, row = 3, column = 0, text = "M", text_color = whiteColor)
+
+// Simple Moving Average: 20MA
+//table.cell(technical_table, row = 0, column = 5, text = "20MA (%)", text_color = whiteColor)
+//table.cell(technical_table, row = 1, column = 5, text = sma_20_d_string, text_color = whiteColor, bgcolor = color_sma_20_d)
+//table.cell(technical_table, row = 2, column = 5, text = sma_20_w_string, text_color = whiteColor, bgcolor = color_sma_20_w)
+//table.cell(technical_table, row = 3, column = 5, text = sma_20_m_string, text_color = whiteColor, bgcolor = color_sma_20_m)
+ 
+// Simple Moving Average: 50MA
+table.cell(technical_table, row = 0, column = 6, text = "50MA (%)", text_color = whiteColor)
+table.cell(technical_table, row = 1, column = 6, text = sma_50_d_string, text_color = whiteColor, bgcolor = color_sma_50_d)
+table.cell(technical_table, row = 2, column = 6, text = sma_50_w_string, text_color = whiteColor, bgcolor = color_sma_50_w)
+table.cell(technical_table, row = 3, column = 6, text = sma_50_m_string, text_color = whiteColor, bgcolor = color_sma_50_m)
+ 
+// Simple Moving Average: 100MA
+table.cell(technical_table, row = 0, column = 7, text = "100MA (%)", text_color = whiteColor)
+table.cell(technical_table, row = 1, column = 7, text = sma_100_d_string, text_color = whiteColor, bgcolor = color_sma_100_d)
+table.cell(technical_table, row = 2, column = 7, text = sma_100_w_string, text_color = whiteColor, bgcolor = color_sma_100_w)
+table.cell(technical_table, row = 3, column = 7, text = sma_100_m_string, text_color = whiteColor, bgcolor = color_sma_100_m)
+ 
+// Simple Moving Average: 200MA
+table.cell(technical_table, row = 0, column = 8, text = "200MA (%)", text_color = whiteColor)
+table.cell(technical_table, row = 1, column = 8, text = sma_200_d_string, text_color = whiteColor, bgcolor = color_sma_200_d)
+table.cell(technical_table, row = 2, column = 8, text = sma_200_w_string, text_color = whiteColor, bgcolor = color_sma_200_w)
+table.cell(technical_table, row = 3, column = 8, text = sma_200_m_string, text_color = whiteColor, bgcolor = color_sma_200_m)
+ 
+
+//  ************************************************************ Technical Oscillator  
+************************************************************************************************************************
+// ............................................... Technical  
+Oscillator..............................................................................................
+technical_table_oscillator = table.new(position = position.bottom_right, rows = 4, columns = 9, bgcolor = 
+color.new(color.yellow,60), border_width=2)
+table.cell(technical_table_oscillator, row = 0, column = 0, text = "", text_color = yellowColor)
+table.cell(technical_table_oscillator, row = 1, column = 0, text = "D", text_color = whiteColor)
+table.cell(technical_table_oscillator, row = 2, column = 0, text = "W", text_color = whiteColor)
+table.cell(technical_table_oscillator, row = 3, column = 0, text = "M", text_color = whiteColor)
+
+// Stochastic RSI
+table.cell(technical_table_oscillator, row = 0, column = 1, text = "Stochastic-RSI", text_color = whiteColor)
+table.cell(technical_table_oscillator, row = 1, column = 1, text = fourteen_D_stoch_RSI_k_string + " | 
+"+fourteen_D_stoch_RSI_d_string, text_color = fourteen_d_rsi_color, bgcolor=fourteen_stoch_RSI_D_color)
+table.cell(technical_table_oscillator, row = 2, column = 1, text = fourteen_W_stoch_RSI_k_string + " | 
+"+fourteen_W_stoch_RSI_d_string, text_color = whiteColor, bgcolor=fourteen_stoch_RSI_W_color)
+table.cell(technical_table_oscillator, row = 3, column = 1, text = fourteen_M_stoch_RSI_k_string + " | 
+"+fourteen_M_stoch_RSI_d_string, text_color = fourteen_m_rsi_color, bgcolor=fourteen_stoch_RSI_M_color)
+
+// RSI
+table.cell(technical_table_oscillator, row = 0, column = 2, text = "RSI", text_color = whiteColor)
+table.cell(technical_table_oscillator, row = 1, column = 2, text = fourteen_D_RSI_string + " | "+fourteen_D_RSI_ma_string, 
+text_color = fourteen_d_rsi_color, bgcolor=fourteen_D_RSI_color)
+table.cell(technical_table_oscillator, row = 2, column = 2, text = fourteen_W_RSI_string + " | "+fourteen_W_RSI_ma_string, 
+text_color = whiteColor, bgcolor=fourteen_W_RSI_color)
+table.cell(technical_table_oscillator, row = 3, column = 2, text = fourteen_M_RSI_string + " | "+fourteen_M_RSI_ma_string, 
+text_color = fourteen_m_rsi_color, bgcolor=fourteen_M_RSI_color)
+
+// MACD
+table.cell(technical_table_oscillator, row = 0, column = 3, text = "MACD", text_color = whiteColor)
+table.cell(technical_table_oscillator, row = 1, column = 3, text = macdLine_d_string+" | "+ signalLine_d_string, text_color = 
+whiteColor, bgcolor = macdLine_d_color)
+table.cell(technical_table_oscillator, row = 2, column = 3, text = macdLine_w_string+" | "+ signalLine_w_string, text_color = 
+whiteColor, bgcolor = macdLine_w_color)
+table.cell(technical_table_oscillator, row = 3, column = 3, text = macdLine_m_string+" | "+ signalLine_m_string, text_color = 
+whiteColor, bgcolor = macdLine_m_color)
+
+
+
+// ************************************************************ Others 
+************************************************************************************************************************
+// ...................................... Legend ......................................
+other_table = table.new(position = position.top_right, rows = 9, columns = 2, bgcolor = color.new(color.yellow,90), 
+border_width=0)
+
+table.cell(other_table, row = 0, column = 0, text = "Metrics: "+index.countrySelect() , text_color = whiteColor, 
+bgcolor=color.new(color.black,1))
+table.cell(other_table, row = 0, column = 1, text = "%", text_color = whiteColor, bgcolor=color.new(color.black,1))
+
+table.cell(other_table, row = 1, column = 0, text = "Beta", text_color = whiteColor)
+table.cell(other_table, row = 1, column = 1, text = beta_string, text_color = whiteColor)
+
+table.cell(other_table, row = 2, column = 0, text = "Correlation", text_color = whiteColor, bgcolor=color.new(color.gray,50))
+table.cell(other_table, row = 2, column = 1, text = correlation_string, text_color = whiteColor, 
+bgcolor=color.new(color.gray,50))
+
+// MMRI
+table.cell(other_table, row = 3, column = 0, text = "MMRI | 10x Yield", text_color = whiteColor, 
+bgcolor=color.new(color.yellow,50))
+table.cell(other_table, row = 3, column = 1, text = mmri_string + " | " + ten_year_yield, text_color = color.black, bgcolor = 
+mmri_color)
+
+// Stock Returns: 1Year
+table.cell(other_table, row = 4, column = 0, text= "Stock Annual Returns ", text_color = whiteColor, 
+bgcolor=color.new(color.teal,80))
+table.cell(other_table, row = 4, column = 1, text = stock_annual_return_percent_string, text_color = whiteColor, bgcolor = 
+index.positron(stock_annual_return_percent))
+
+// Stock Returns: Varies
+table.cell(other_table, row = 5, column = 0, text= "Stock Returns For "+multiplier_string+ " Y", text_color = whiteColor, 
+bgcolor=color.new(color.teal,80))
+table.cell(other_table, row = 5, column = 1, text = stock_returns_var_string, text_color = whiteColor, bgcolor = 
+index.positron(stock_annual_return_percent))
+
+// Index Returns
+table.cell(other_table, row = 6, column = 0, text= "Index Annual Returns ", text_color = whiteColor, 
+bgcolor=color.new(color.teal,80))
+table.cell(other_table, row = 6, column = 1, text = index_annual_return_percent_string, text_color = whiteColor, bgcolor = 
+index.positron(index_annual_return_percent))
+
+// Index Returns: Varies
+table.cell(other_table, row = 7, column = 0, text= "Index Returns For "+multiplier_string+" Y", text_color = whiteColor, 
+bgcolor=color.new(color.teal,80))
+table.cell(other_table, row = 7, column = 1, text = index_returns_var_string, text_color = whiteColor, bgcolor = 
+index.positron(stock_annual_return_percent))
+
+// CAPM
+table.cell(other_table, row = 8, column = 0, text= "CAPM | "+index_name +" | 
+"+index.countrySelect()+str.tostring(multiplier_stringer), text_color = whiteColor, bgcolor=color.new(color.teal,80))
+table.cell(other_table, row = 8, column = 1, text = capm_string, text_color = whiteColor, bgcolor = 
+index.positron(capm_expected_rate_of_return))

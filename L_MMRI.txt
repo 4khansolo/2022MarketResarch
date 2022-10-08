@@ -1,0 +1,80 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+// I do not come up with the original idea. The idea is from the legendary Mannarino.
+// The source is also listed below.
+// ****************************************** Mannarino Market Risk Indicator ******************************************
+library("MMRI_4khansolo")
+// Mannarino Market Risk Indicator
+// Source as of June 14, 2022: https://traderschoice.net/about-traders-choice/
+// Formula As follows: (DXY = 105.2) * (TNX = 3.366) / 1.61
+//                      Parameters
+//                   Low 	     50-100         Green
+//                   Moderate   100-200         Yellow
+//                   High 	    200-300         Orange
+//                   Extreme 	    300+        Red
+
+
+// Mannarino Market Risk Indicator (MMRI)with corresponding color
+export mmri(float DXY, float TNX)=>
+    // This poriton is basically a formula
+    mmri = math.round(DXY*TNX/1.61,2)
+    // This portion uses the parameters and change colors
+    colours = if mmri < 100
+        color.new(color.green,10)
+    else if mmri >= 100 and mmri < 200
+        color.new(color.yellow,10)
+    else if mmri >=200 and mmri<300
+        color.new(color.orange,10) 
+    else
+        color.new(color.red,10)
+    [mmri,colours]
+//Source for rounding: As of June 14, 2022. 
+https://www.tradingview.com/pine-script-docs/en/v5/language/Execution_model.html?highlight=round
+
+export currencyIndex()=>
+    // MMRI Based Derived Metrics
+    // ************************************************************ Establishing some variables 
+************************************************************
+    // Canada, USA, UK, Japan, EU
+    can   = "CXY"      // Canada; Bank of Canada (BOC)
+    usa   = "DXY"      // US; US FED (Fed)
+    uk    = "BXY"      // Great Britain; Bank of England (BOE)
+    jap   = "JXY"      // Japan; Bank of Japan (BOJ)
+    eu    = "EXY"      // Europe; European Central Bank (ECB)
+    fiatIndex = if syminfo.currency == currency.USD //if syminfo.ticker == "NASDAQ" or syminfo.ticker == "NYSE" or 
+syminfo.ticker == "OTC" 
+        usa
+    else if syminfo.currency == currency.CAD//if syminfo.ticker == "TSX" or syminfo.ticker == "TSXV" or syminfo.ticker == "NEO" 
+or syminfo.ticker == "CSE"
+        can
+    else if syminfo.currency == currency.JPY//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        jap
+    else if syminfo.currency == currency.GBP//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        uk
+    else if syminfo.currency == currency.EUR//if syminfo.ticker == "SSE" or syminfo.ticker == "NSE" or syminfo.ticker == "FSE" 
+or syminfo.ticker == "NSE" or syminfo.ticker == "TSE" or syminfo.ticker == "TFX" or syminfo.ticker == "TOCOM" or syminfo.ticker 
+== "OSE"
+        eu
+    else
+        usa
+// The function for MMRI
+intervals = input.session("D", "Day | Week | Month", options=["D", "W", "M"])
+dxy = request.security(currencyIndex(),intervals, close)    // 1 Day Default Settings
+tnx = request.security("TNX", intervals, close)             // 1 Day Default Settings
+
+[mmri,colours]=mmri(dxy,tnx)
+
+
+// Plotting the MMRI; the colors are represented with the mmri values
+plot(mmri,linewidth=05,color=colours)
+
+
+
+
+

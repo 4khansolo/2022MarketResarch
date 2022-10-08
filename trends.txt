@@ -1,0 +1,103 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fourkhansolo
+
+//@version=5
+indicator("Trends 4khansolo", shorttitle="Trends_4khansolo", overlay = true)
+
+// collecting closing at different ranges
+high_ticker_d = request.security(syminfo.tickerid, "D", high, currency = syminfo.currency)
+high_ticker_w = request.security(syminfo.tickerid, "W", high_ticker_d, currency = syminfo.currency)
+high_ticker_m = request.security(syminfo.tickerid, "M", high_ticker_d, currency = syminfo.currency)
+// Source: https://www.tradingview.com/pine-script-reference/v5/#fun_request{dot}security
+
+// collecting highest from highest at different ranges
+highest_highest_ticker_w = ta.highest(high_ticker_d,5)                      // 1 Week
+highest_highest_ticker_d_m = ta.highest(high_ticker_d,30)                   // 1 Month
+highest_highest_ticker_w_m = ta.highest(high_ticker_w,4)                    // 1 Month
+// Source: https://www.tradingview.com/pine-script-reference/v5/#fun_ta{dot}highest
+
+// Fiftytwo Week High
+week52High = ta.highest(high_ticker_d,251)
+week52High_p=plot(week52High,"52 Week High", color=color.teal)
+
+
+// Bearish Tester Value: Bearish by Definition
+bearish_value = week52High*(1-0.2)// 20% lower
+plot(bearish_value, "Bearish Tester Value", color=color.new(color.white,50))
+// Source: https://www.investopedia.com/terms/b/bearmarket.asp
+
+high_ticker_d_w = request.security(syminfo.tickerid, "W", highest_highest_ticker_w, currency = syminfo.currency)
+// Source: https://www.tradingview.com/pine-script-reference/v5/#fun_request{dot}security
+
+// 1 Weeks
+smooth_high_1= ta.sma(high_ticker_d_w,5)
+smooth_high_2 = ta.sma(smooth_high_1,5)// 1 weeks of five weeks
+smooth_high_3 = ta.sma(smooth_high_2,5)
+smooth_high_4 = ta.sma(smooth_high_3,5)
+smooth_high_5 = ta.sma(smooth_high_4,5)
+smooth_high_6 = ta.sma(smooth_high_5,5)
+smooth_high_7 = ta.sma(smooth_high_6,5)
+smooth_high_8 = ta.sma(smooth_high_7,5)
+smooth_high_9 = ta.sma(smooth_high_8,5)
+plot(smooth_high_1,color=color.new(color.yellow,70))
+plot(smooth_high_2,color=color.new(color.yellow,60))
+plot(smooth_high_3,color=color.new(color.yellow,50))
+plot(smooth_high_4,color=color.new(color.yellow,40))
+plot(smooth_high_5,color=color.new(color.yellow,30))
+plot(smooth_high_6,color=color.new(color.yellow,20))
+plot(smooth_high_7,color=color.new(color.yellow,15))
+plot(smooth_high_8,color=color.new(color.yellow,10))
+plot(smooth_high_9,color=color.yellow)
+
+
+// collecting closing at different ranges
+low_ticker_d = request.security(syminfo.tickerid, "D", low, currency = syminfo.currency)
+low_ticker_w = request.security(syminfo.tickerid, "W", low_ticker_d, currency = syminfo.currency)
+low_ticker_m = request.security(syminfo.tickerid, "M", low_ticker_d, currency = syminfo.currency)
+// Fiftytwo Week High
+week51Low = ta.lowest(low_ticker_d,251)
+plot(week51Low,"52 Week Low", color=color.red)
+
+
+// collecting highest from highest at different ranges
+lowest_lowest_ticker_w = ta.lowest(low_ticker_d,5)                      // 1 Week
+lowest_lowest_ticker_d_m = ta.lowest(low_ticker_d,30)                   // 1 Month
+lowest_lowest_ticker_w_m = ta.lowest(low_ticker_d,4)                    // 1 Month
+// Source: https://www.tradingview.com/pine-script-reference/v5/#fun_ta{dot}lowest
+
+
+
+low_ticker_d_w = request.security(syminfo.tickerid, "W", lowest_lowest_ticker_w, currency = syminfo.currency)
+// Source: https://www.tradingview.com/pine-script-reference/v5/#fun_request{dot}security
+
+smooth_low_1= ta.sma(low_ticker_d_w,5)
+smooth_low_2 = ta.sma(smooth_low_1,5)
+smooth_low_3 = ta.sma(smooth_low_2,5)
+smooth_low_4 = ta.sma(smooth_low_3,5)
+smooth_low_5 = ta.sma(smooth_low_4,5)
+smooth_low_6 = ta.sma(smooth_low_5,5)
+smooth_low_7 = ta.sma(smooth_low_6,5)
+smooth_low_8 = ta.sma(smooth_low_7,5)
+smooth_low_9 = ta.sma(smooth_low_8,5)
+plot(smooth_low_1,color=color.new(color.green,70))
+plot(smooth_low_2,color=color.new(color.green,60))
+plot(smooth_low_3,color=color.new(color.green,50))
+plot(smooth_low_4,color=color.new(color.green,40))
+plot(smooth_low_5,color=color.new(color.green,30))
+plot(smooth_low_6,color=color.new(color.green,20))
+plot(smooth_low_7,color=color.new(color.green,15))
+plot(smooth_low_8,color=color.new(color.green,10))
+plot(smooth_low_9,color=color.green)
+
+
+buy_1 = ta.crossover(close,smooth_high_9)
+buy_2 = ta.crossover (close[1],smooth_high_9[1])
+sell_buy_signal = if smooth_high_9 > close
+    color.new(color.red,70)
+else if buy_1
+    color.new(color.white,70)
+else if buy_2
+    color.new(color.green,10)
+
+filer_52 = plot(week52High*1.04,display=display.none)
+fill(week52High_p,filer_52 ,color=sell_buy_signal)
